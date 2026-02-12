@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Load saved food entries
     loadFoodEntries();
 
-    // Event listener for adding and removing food items
     foodItemsContainer.addEventListener("click", (e) => {
         if (e.target.classList.contains("add-food")) {
             addFoodItem();
@@ -19,10 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Calculate total amount dynamically
     foodItemsContainer.addEventListener("input", calculateTotalAmount);
 
-    // Form submission
     roomFoodForm.addEventListener("submit", (e) => {
         e.preventDefault();
 
@@ -32,22 +29,16 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             addNewEntry(entry);
         }
-         // this isn't being used here
-        // saveEntries();
         resetForm();
     });
 
-    // Edit, Export, and Print functionality
     entriesTableBody.addEventListener("click", (e) => {
         if (e.target.classList.contains("edit-entry")) {
             prepareEditEntry(e.target.closest("tr"));
         } else if (e.target.classList.contains("print-receipt")) {
             printReceipt(e.target.closest("tr"));
-
         }
     });
-
-    // Functions
 
     function addFoodItem(type = "", amount = "") {
         const newFoodItem = document.createElement("div");
@@ -96,9 +87,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 "Content-type":"application/json"
             }
         })
-        // const entries = getEntries();
-        // entries.push(entry);
-        // saveEntries(entries);
     }
 
     function addEntryToTable(entry) {
@@ -126,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const paymentMethod = cells[2].textContent;
         const serviceLocation = cells[3].textContent;
         const totalAmount = cells[4].textContent;
-        //get entry for isPrint check
+
         let index = Array.from(entriesTableBody.children).indexOf(row);
         const entries = await getEntries();
         const entry = entries[index];
@@ -134,6 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Can't edit after making a print out")
             return
         }
+
         const foodDetails = Array.from(cells[1].querySelectorAll("div")).map((div) => {
             const [type, amount] = div.textContent.split(" - ");
             return { type, amount };
@@ -159,31 +148,94 @@ document.addEventListener("DOMContentLoaded", function () {
         editMode = false;
     }
 
+    // 🔥 UPDATED POS THERMAL PRINT RECEIPT
     async function printReceipt(row) {
         const entry = collectRowData(row);
 
-         //get id for isPrint edit
-         let index = Array.from(entriesTableBody.children).indexOf(row);
-         const entries = await getEntries();
-         const _id = entries[index]._id
-         
-        const receiptContent = `
-            <h1>Montevar Hotel</h1>
-            <h3>Food/Beverage Receipt</h3>
-            <p><strong>Room No:</strong> ${entry.roomNo}</p>
-            <p><strong>Food/Beverage:</strong> <br> ${entry.foodTypes.map(
-                (type, index) => `${type} - ${entry.foodAmounts[index]}`
-            ).join("<br>")}</p>
-            <p><strong>Payment Method:</strong> ${entry.paymentMethod}</p>
-            <p><strong>Service Location:</strong> ${entry.serviceLocation}</p>
-            <p><strong>Total Amount:</strong> ${entry.totalAmount}</p>
-            <p><strong>Date of Entry:</strong> ${entry.dateOfEntry}</p>
-        `;
+        let index = Array.from(entriesTableBody.children).indexOf(row);
+        const entries = await getEntries();
+        const _id = entries[index]._id
 
-        const printWindow = window.open("", "_blank");
-        printWindow.document.write(receiptContent);
+        const formatCurrency = (amount) => {
+            return "₦" + Number(amount).toLocaleString('en-NG');
+        };
+
+        const printWindow = window.open("", "", "width=400,height=600");
+
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Receipt</title>
+                <style>
+                    body {
+                        font-family: "Courier New", monospace;
+                        font-size: 12px;
+                        width: 300px;
+                        margin: auto;
+                        padding: 10px;
+                    }
+                    .center { text-align: center; }
+                    .logo img { width: 80px; margin-bottom: 5px; }
+                    .line { border-top: 1px dashed #000; margin: 8px 0; }
+                    .footer { font-size: 10px; margin-top: 10px; text-align: center; }
+                    button { margin-top: 10px; font-size: 11px; padding: 4px 8px; }
+                    @media print { button { display: none; } }
+                </style>
+            </head>
+            <body>
+
+                <div class="center logo">
+                    <img src="/images/Montevar_logo.png" alt="Montevar Logo">
+                </div>
+
+                <div class="center">
+                    <strong>MONTEVAR HOTEL</strong><br>
+                    Food/Beverage Receipt
+                </div>
+
+                <div class="line"></div>
+
+                <div><strong>Room No:</strong> ${entry.roomNo}</div>
+
+                <div class="line"></div>
+
+                <div>
+                    <strong>Items:</strong><br>
+                    ${entry.foodTypes.map(
+                        (type, index) => `${type} - ${formatCurrency(entry.foodAmounts[index])}`
+                    ).join("<br>")}
+                </div>
+
+                <div class="line"></div>
+
+                <div><strong>Payment:</strong> ${entry.paymentMethod}</div>
+                <div><strong>Location:</strong> ${entry.serviceLocation}</div>
+
+                <div class="line"></div>
+
+                <div><strong>Total:</strong> ${formatCurrency(entry.totalAmount)}</div>
+
+                <div class="line"></div>
+
+                <div><strong>Date:</strong> ${entry.dateOfEntry}</div>
+
+                <div class="line"></div>
+
+                <div class="footer">
+                    airport road a, 1, Montevar street ofumwengbe community off Egbirhi, near obazagbon, Benin City, Edo<br>
+                    Phone: 07060996380
+                </div>
+
+                <div class="center">
+                    <button onclick="window.print()">Print</button>
+                    <button onclick="window.close()">Close</button>
+                </div>
+
+            </body>
+            </html>
+        `);
+
         printWindow.document.close();
-        printWindow.print();
 
         await fetch("/api/v1/food", {
             method:"POST",
@@ -198,7 +250,6 @@ document.addEventListener("DOMContentLoaded", function () {
         roomFoodForm.reset();
         foodItemsContainer.innerHTML = "";
         editMode = false;
-        // in this place setting currentEditIndex to null causes a null error
     }
 
     async function reloadTable() {
@@ -206,7 +257,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const entries = await getEntries();
         entries.forEach(addEntryToTable);
     }
-     //instead take _id as param
+
     async function saveEntries(entry) {
         entry.edit = true
         await fetch ("/api/v1/food", {
@@ -217,12 +268,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         })
     }
-    //todo no more local storage
+
     async function getEntries() {
         const res = await fetch("/api/v1/food")
         return (await res.json()).foods || [];
     }
-     //todo
+
     async function loadFoodEntries() {
         const entries = await getEntries();
         entries.forEach(addEntryToTable);
