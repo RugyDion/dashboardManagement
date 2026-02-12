@@ -221,38 +221,133 @@ async function printBooking(index) {
     const completedBookings = await res1.json() || [];
     const bookings = completedBookings.filter(b => b.isConfirmed);
     const booking = bookings[index];
-    const printWindow = window.open('', '', 'width=800,height=600');
+
+    const printWindow = window.open('', '', 'width=400,height=600');
+
+    // Currency formatter (₦ with comma separation)
+    const formatCurrency = (amount) => {
+        return "₦" + Number(amount).toLocaleString('en-NG');
+    };
 
     printWindow.document.write(`
         <style>
             body {
-                font-family: Arial, sans-serif;
-                margin: 20px;
+                font-family: "Courier New", monospace;
+                font-size: 12px;
+                width: 300px;
+                margin: auto;
+                padding: 10px;
             }
-            h1, h2 {
-                text-align: left;
+
+            .center {
+                text-align: center;
             }
-            p {
-                font-weight: bold;
-                text-align: left;
+
+            .logo img {
+                width: 80px;
+                margin-bottom: 5px;
             }
+
+            .line {
+                border-top: 1px dashed #000;
+                margin: 8px 0;
+            }
+
+            .row {
+                display: flex;
+                justify-content: space-between;
+                margin: 4px 0;
+            }
+
+            .footer {
+                font-size: 10px;
+                margin-top: 10px;
+                text-align: center;
+            }
+
             button {
-                margin-top: 20px;
+                margin-top: 10px;
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+
+            @media print {
+                button {
+                    display: none;
+                }
             }
         </style>
-        <h2>Montevar Hotel</h2>
-        <h4>Booking Receipt</h4>
-        <p>Full Name: ${booking.fullName}</p>
-        <p>Phone: ${booking.phoneNumber}</p>
-        <p>Duration: ${booking.durationOfStayStart.slice(0, booking.durationOfStayStart.indexOf("T"))} to ${booking.durationOfStayEnd.slice(0, booking.durationOfStayEnd.indexOf("T"))}</p>
-        <p>Room No: ${booking.roomNumber}</p>
-        <p>Room Price: ${booking.roomPrice}</p>
-        <p>Room Type: ${booking.roomType}</p>
-        <p>Number of Days: ${booking.numberOfDays}</p>
-        <p>Total Amount: ${booking.totalAmount}</p>
-        <button onclick="window.print()">Print</button>
-        <button onclick="window.close()">Close</button>
+
+        <div class="center logo">
+            <img src="/images/Montevar_logo.png" alt="Montevar Logo">
+        </div>
+
+        <div class="center">
+            <strong>MONTEVAR HOTEL</strong><br>
+            Booking Receipt
+        </div>
+
+        <div class="line"></div>
+
+        <div class="row">
+            <span>Name:</span>
+            <span>${booking.fullName}</span>
+        </div>
+
+        <div class="row">
+            <span>Phone:</span>
+            <span>${booking.phoneNumber}</span>
+        </div>
+
+        <div class="line"></div>
+
+        <div>
+            Check-in: ${booking.durationOfStayStart.slice(0, booking.durationOfStayStart.indexOf("T"))}<br>
+            Check-out: ${booking.durationOfStayEnd.slice(0, booking.durationOfStayEnd.indexOf("T"))}
+        </div>
+
+        <div class="line"></div>
+
+        <div class="row">
+            <span>Room No:</span>
+            <span>${booking.roomNumber}</span>
+        </div>
+
+        <div class="row">
+            <span>Room Type:</span>
+            <span>${booking.roomType}</span>
+        </div>
+
+        <div class="row">
+            <span>Price/Night:</span>
+            <span>${formatCurrency(booking.roomPrice)}</span>
+        </div>
+
+        <div class="row">
+            <span>Days:</span>
+            <span>${booking.numberOfDays}</span>
+        </div>
+
+        <div class="line"></div>
+
+        <div class="row">
+            <strong>Total:</strong>
+            <strong>${formatCurrency(booking.totalAmount)}</strong>
+        </div>
+
+        <div class="line"></div>
+
+        <div class="footer">
+            airport road a, 1, Montevar street ofumwengbe community off Egbirhi, near obazagbon, Benin City, Edo<br>
+            Phone: 07060996380
+        </div>
+
+        <div class="center">
+            <button onclick="window.print()">Print</button>
+            <button onclick="window.close()">Close</button>
+        </div>
     `);
+
     await fetch("/api/v1/bookings", {
         method:"POST",
         headers:{
