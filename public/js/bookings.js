@@ -5,13 +5,15 @@ let currentUpdateId =""
 async function loadBookings() {
     const res1 = await fetch("/api/v1/bookings")
     const completedBookings = await res1.json() || [];
-    const bookings = completedBookings.filter( b => b.isConfirmed)
+    const bookings = completedBookings
+    .filter(b => b.isConfirmed)
+    .reverse();
     const confirmedBookingsDiv = document.getElementById('confirmed-bookings');
     confirmedBookingsDiv.innerHTML = '';
 
     const currentDate = new Date();
 
-    bookings.forEach((booking, index) => {
+    bookings.reverse().forEach((booking, index) => {
         const bookingInfo = document.createElement('div');
         const expiryDate = new Date(booking.durationOfStayEnd);
 
