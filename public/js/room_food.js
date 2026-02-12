@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <button class="print-receipt">Print</button>
             </td>
         `;
-        entriesTableBody.appendChild(row);
+        entriesTableBody.prepend(row);
     }
 
     async function prepareEditEntry(row) {
