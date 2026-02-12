@@ -13,7 +13,7 @@ async function loadBookings() {
 
     const currentDate = new Date();
 
-    bookings.reverse().forEach((booking, index) => {
+    bookings.forEach((booking, index) => {
         const bookingInfo = document.createElement('div');
         const expiryDate = new Date(booking.durationOfStayEnd);
 
