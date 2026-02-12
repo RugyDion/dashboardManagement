@@ -1,5 +1,7 @@
 let currentEditIndex;
+
 document.addEventListener("DOMContentLoaded", function () {
+
     let editMode = false;
 
     const roomFoodForm = document.getElementById("food-form");
@@ -45,12 +47,14 @@ document.addEventListener("DOMContentLoaded", function () {
         newFoodItem.classList.add("food-item");
         newFoodItem.innerHTML = `
             <div class="food-item-flex">
-                 <div class="cnt">
-                <label>Food/Beverage:</label>
-                <input type="text" class="food-type" name="foodType[]" value="${type}" required></div>
+                <div class="cnt">
+                    <label>Food/Beverage:</label>
+                    <input type="text" class="food-type" name="foodType[]" value="${type}" required>
+                </div>
                 <div class="cnt nt">
-                <label><br>Amount:</label>
-                <input type="number" class="food-amount" name="foodAmount[]" value="${amount}" min="0" required></div>
+                    <label><br>Amount:</label>
+                    <input type="number" class="food-amount" name="foodAmount[]" value="${amount}" min="0" required>
+                </div>
             </div>
             <button type="button" class="remove-food">-</button>
         `;
@@ -80,13 +84,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function addNewEntry(entry) {
         addEntryToTable(entry);
-        await fetch ("/api/v1/food", {
-            method:"POST",
-            body:JSON.stringify(entry),
-            headers:{
-                "Content-type":"application/json"
+        await fetch("/api/v1/food", {
+            method: "POST",
+            body: JSON.stringify(entry),
+            headers: {
+                "Content-type": "application/json"
             }
-        })
+        });
     }
 
     function addEntryToTable(entry) {
@@ -94,7 +98,9 @@ document.addEventListener("DOMContentLoaded", function () {
         row.innerHTML = `
             <td>${entry.roomNo}</td>
             <td>
-                ${entry.foodTypes.map((type, index) => `<div>${type} - ${entry.foodAmounts[index]}</div>`).join("")}
+                ${entry.foodTypes.map((type, index) => 
+                    `<div>${type} - ${entry.foodAmounts[index]}</div>`
+                ).join("")}
             </td>
             <td>${entry.paymentMethod}</td>
             <td>${entry.serviceLocation}</td>
@@ -105,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <button class="print-receipt">Print</button>
             </td>
         `;
-        entriesTableBody.prepend(row);
+        entriesTableBody.prepend(row); // newest at top
     }
 
     async function prepareEditEntry(row) {
@@ -117,10 +123,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         let index = Array.from(entriesTableBody.children).indexOf(row);
         const entries = await getEntries();
-        const entry = entries[index];
-        if(entry.isPrint){
-            alert("Can't edit after making a print out")
-            return
+        const reversed = [...entries].reverse();
+        const entry = reversed[index];
+
+        if (entry.isPrint) {
+            alert("Can't edit after making a print out");
+            return;
         }
 
         const foodDetails = Array.from(cells[1].querySelectorAll("div")).map((div) => {
@@ -137,113 +145,116 @@ document.addEventListener("DOMContentLoaded", function () {
         foodDetails.forEach(({ type, amount }) => addFoodItem(type, amount));
 
         editMode = true;
-        currentEditIndex = Array.from(entriesTableBody.children).indexOf(row);
+        currentEditIndex = index;
     }
 
     async function updateEntry(entry) {
         const entries = await getEntries();
-        entry._id = entries[currentEditIndex]._id 
+        const reversed = [...entries].reverse();
+        entry._id = reversed[currentEditIndex]._id;
         saveEntries(entry);
         reloadTable();
         editMode = false;
     }
 
-    // 🔥 UPDATED POS THERMAL PRINT RECEIPT
+    // 🔥 POS THERMAL PRINT RECEIPT
     async function printReceipt(row) {
+
         const entry = collectRowData(row);
 
         let index = Array.from(entriesTableBody.children).indexOf(row);
         const entries = await getEntries();
-        const _id = entries[index]._id
+        const reversed = [...entries].reverse();
+        const _id = reversed[index]._id;
 
         const formatCurrency = (amount) => {
-            return "₦" + Number(amount).toLocaleString('en-NG');
+            return "₦" + Number(amount).toLocaleString("en-NG");
         };
 
         const printWindow = window.open("", "", "width=400,height=600");
 
         printWindow.document.write(`
-            <html>
-            <head>
-                <title>Receipt</title>
-                <style>
-                    body {
-                        font-family: "Courier New", monospace;
-                        font-size: 12px;
-                        width: 300px;
-                        margin: auto;
-                        padding: 10px;
-                    }
-                    .center { text-align: center; }
-                    .logo img { width: 80px; margin-bottom: 5px; }
-                    .line { border-top: 1px dashed #000; margin: 8px 0; }
-                    .footer { font-size: 10px; margin-top: 10px; text-align: center; }
-                    button { margin-top: 10px; font-size: 11px; padding: 4px 8px; }
-                    @media print { button { display: none; } }
-                </style>
-            </head>
-            <body>
+        <html>
+        <head>
+            <title>Receipt</title>
+            <style>
+                body {
+                    font-family: "Courier New", monospace;
+                    font-size: 12px;
+                    width: 300px;
+                    margin: auto;
+                    padding: 10px;
+                }
+                .center { text-align: center; }
+                .logo img { width: 80px; margin-bottom: 5px; }
+                .line { border-top: 1px dashed #000; margin: 8px 0; }
+                .footer { font-size: 10px; margin-top: 10px; text-align: center; }
+                button { margin-top: 10px; font-size: 11px; padding: 4px 8px; }
+                @media print { button { display: none; } }
+            </style>
+        </head>
+        <body>
 
-                <div class="center logo">
-                    <img src="/images/Montevar_logo.png" alt="Montevar Logo">
-                </div>
+            <div class="center logo">
+                <img src="/images/Montevar_logo.png">
+            </div>
 
-                <div class="center">
-                    <strong>MONTEVAR HOTEL</strong><br>
-                    Food/Beverage Receipt
-                </div>
+            <div class="center">
+                <strong>MONTEVAR HOTEL</strong><br>
+                Food/Beverage Receipt
+            </div>
 
-                <div class="line"></div>
+            <div class="line"></div>
 
-                <div><strong>Room No:</strong> ${entry.roomNo}</div>
+            <div><strong>Room:</strong> ${entry.roomNo}</div>
 
-                <div class="line"></div>
+            <div class="line"></div>
 
-                <div>
-                    <strong>Items:</strong><br>
-                    ${entry.foodTypes.map(
-                        (type, index) => `${type} - ${formatCurrency(entry.foodAmounts[index])}`
-                    ).join("<br>")}
-                </div>
+            ${entry.foodTypes.map((type, index) => `
+                <div>${type}</div>
+                <div style="text-align:right">${formatCurrency(entry.foodAmounts[index])}</div>
+            `).join("")}
 
-                <div class="line"></div>
+            <div class="line"></div>
 
-                <div><strong>Payment:</strong> ${entry.paymentMethod}</div>
-                <div><strong>Location:</strong> ${entry.serviceLocation}</div>
+            <div><strong>Payment:</strong> ${entry.paymentMethod}</div>
+            <div><strong>Location:</strong> ${entry.serviceLocation}</div>
 
-                <div class="line"></div>
+            <div class="line"></div>
 
-                <div><strong>Total:</strong> ${formatCurrency(entry.totalAmount)}</div>
+            <div style="font-weight:bold;">
+                TOTAL: ${formatCurrency(entry.totalAmount)}
+            </div>
 
-                <div class="line"></div>
+            <div class="line"></div>
 
-                <div><strong>Date:</strong> ${entry.dateOfEntry}</div>
+            <div>Date: ${entry.dateOfEntry}</div>
 
-                <div class="line"></div>
+            <div class="line"></div>
 
-                <div class="footer">
-                    airport road a, 1, Montevar street ofumwengbe community off Egbirhi, near obazagbon, Benin City, Edo<br>
-                    Phone: 07060996380
-                </div>
+            <div class="footer">
+                airport road a, 1, Montevar street ofumwengbe community off Egbirhi, near obazagbon, Benin City, Edo<br>
+                Phone: 07060996380
+            </div>
 
-                <div class="center">
-                    <button onclick="window.print()">Print</button>
-                    <button onclick="window.close()">Close</button>
-                </div>
+            <div class="center">
+                <button onclick="window.print()">Print</button>
+                <button onclick="window.close()">Close</button>
+            </div>
 
-            </body>
-            </html>
+        </body>
+        </html>
         `);
 
         printWindow.document.close();
 
         await fetch("/api/v1/food", {
-            method:"POST",
-            body: JSON.stringify({edit:true, isPrint:true, _id}),
-            headers:{
-                "Content-type":"application/json"
+            method: "POST",
+            body: JSON.stringify({ edit: true, isPrint: true, _id }),
+            headers: {
+                "Content-type": "application/json"
             }
-        })
+        });
     }
 
     function resetForm() {
@@ -255,28 +266,28 @@ document.addEventListener("DOMContentLoaded", function () {
     async function reloadTable() {
         entriesTableBody.innerHTML = "";
         const entries = await getEntries();
-        entries.forEach(addEntryToTable);
+        entries.reverse().forEach(addEntryToTable); // newest stays on top
     }
 
     async function saveEntries(entry) {
-        entry.edit = true
-        await fetch ("/api/v1/food", {
-            method:"POST",
-            body:JSON.stringify(entry),
-            headers:{
-                "Content-type":"application/json"
+        entry.edit = true;
+        await fetch("/api/v1/food", {
+            method: "POST",
+            body: JSON.stringify(entry),
+            headers: {
+                "Content-type": "application/json"
             }
-        })
+        });
     }
 
     async function getEntries() {
-        const res = await fetch("/api/v1/food")
+        const res = await fetch("/api/v1/food");
         return (await res.json()).foods || [];
     }
 
     async function loadFoodEntries() {
         const entries = await getEntries();
-        entries.forEach(addEntryToTable);
+        entries.reverse().forEach(addEntryToTable); // newest first
     }
 
     function collectRowData(row) {
@@ -291,4 +302,5 @@ document.addEventListener("DOMContentLoaded", function () {
             dateOfEntry: cells[5].textContent,
         };
     }
+
 });
