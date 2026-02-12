@@ -192,53 +192,151 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Handle print receipt functionality //todo
-    entriesTableBody.addEventListener("click",async (e) => {
-        if (e.target.classList.contains("print-receipt")) {
-            const row = e.target.parentElement.parentElement;
-            const cells = row.querySelectorAll("td");
-            // get index to get ID
-            const res = await fetch("/api/v1/drinks")
-            const entries = (await res.json()).drinks || [];
-            const childs = Array.from(entriesTableBody.children)
-            const index = childs.indexOf(row);
-            const entry = entries[index];
-            const _id = entry._id
-            
+   // Handle print receipt functionality
+entriesTableBody.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("print-receipt")) {
 
-            const roomNo = cells[0].textContent;
-            const drinkItems = cells[1].innerHTML;
-            const paymentMethod = cells[2].textContent;
-            const serviceLocation = cells[3].textContent;
-            const totalAmount = cells[4].textContent;
-            const dateOfEntry = cells[5].textContent;
+        const row = e.target.parentElement.parentElement;
+        const cells = row.querySelectorAll("td");
 
-            const receiptContent = `
-                <h1>Montevar Hotel</h1>
-                <h3>Drinks/Beverage Receipt</h3>
-                <p><strong>Room No:</strong> ${roomNo}</p>
-                <p><strong>Drink/Others:</strong><br>${drinkItems}</p>
-                <p><strong>Payment Method:</strong> ${paymentMethod}</p>
-                <p><strong>Service Location:</strong> ${serviceLocation}</p>
-                <p><strong>Total Amount:</strong> ${totalAmount}</p>
-                <p><strong>Date:</strong> ${dateOfEntry}</p> <!-- Display date on the receipt -->
-            `;
+        // get index to get ID
+        const res = await fetch("/api/v1/drinks")
+        const entries = (await res.json()).drinks || [];
+        const childs = Array.from(entriesTableBody.children)
+        const index = childs.indexOf(row);
+        const entry = entries[index];
+        const _id = entry._id
 
-            const printWindow = window.open("", "_blank");
-            printWindow.document.write(`<html><head><title>Receipt</title></head><body>${receiptContent}</body></html>`);
-            printWindow.document.close();
-            printWindow.print();
-            // update print status
-            await fetch("/api/v1/drinks", {
-                method:"POST",
-                body:JSON.stringify({_id,isPrint:true, edit:true}),
-                headers:{
-                    "Content-type":"application/json"
-                },
-            })
-        }
-    });
+        const roomNo = cells[0].textContent;
+        const drinkItems = cells[1].innerHTML;
+        const paymentMethod = cells[2].textContent;
+        const serviceLocation = cells[3].textContent;
+        const totalAmountRaw = cells[4].textContent.replace(/[₦,]/g, '');
+        const dateOfEntry = cells[5].textContent;
+
+        // Currency formatter
+        const formatCurrency = (amount) => {
+            return "₦" + Number(amount).toLocaleString('en-NG');
+        };
+
+        const printWindow = window.open("", "", "width=400,height=600");
+
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Receipt</title>
+                <style>
+                    body {
+                        font-family: "Courier New", monospace;
+                        font-size: 12px;
+                        width: 300px;
+                        margin: auto;
+                        padding: 10px;
+                    }
+
+                    .center {
+                        text-align: center;
+                    }
+
+                    .logo img {
+                        width: 80px;
+                        margin-bottom: 5px;
+                    }
+
+                    .line {
+                        border-top: 1px dashed #000;
+                        margin: 8px 0;
+                    }
+
+                    .row {
+                        margin: 4px 0;
+                    }
+
+                    .footer {
+                        font-size: 10px;
+                        margin-top: 10px;
+                        text-align: center;
+                    }
+
+                    button {
+                        margin-top: 10px;
+                        font-size: 11px;
+                        padding: 4px 8px;
+                    }
+
+                    @media print {
+                        button {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+
+                <div class="center logo">
+                    <img src="/images/Montevar_logo.png" alt="Montevar Logo">
+                </div>
+
+                <div class="center">
+                    <strong>MONTEVAR HOTEL</strong><br>
+                    Drinks/Beverage Receipt
+                </div>
+
+                <div class="line"></div>
+
+                <div class="row"><strong>Room No:</strong> ${roomNo}</div>
+
+                <div class="line"></div>
+
+                <div class="row">
+                    <strong>Drink/Others:</strong><br>
+                    ${drinkItems}
+                </div>
+
+                <div class="line"></div>
+
+                <div class="row"><strong>Payment:</strong> ${paymentMethod}</div>
+                <div class="row"><strong>Location:</strong> ${serviceLocation}</div>
+
+                <div class="line"></div>
+
+                <div class="row">
+                    <strong>Total:</strong> ${formatCurrency(totalAmountRaw)}
+                </div>
+
+                <div class="line"></div>
+
+                <div class="row"><strong>Date:</strong> ${dateOfEntry}</div>
+
+                <div class="line"></div>
+
+                <div class="footer">
+                    airport road a, 1, Montevar street ofumwengbe community off Egbirhi, near obazagbon, Benin City, Edo<br>
+                    Phone: 07060996380
+                </div>
+
+                <div class="center">
+                    <button onclick="window.print()">Print</button>
+                    <button onclick="window.close()">Close</button>
+                </div>
+
+            </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+
+        // update print status (unchanged)
+        await fetch("/api/v1/drinks", {
+            method:"POST",
+            body:JSON.stringify({_id,isPrint:true, edit:true}),
+            headers:{
+                "Content-type":"application/json"
+            },
+        })
+    }
 });
+
 
 // Export the drink entry to drink_report.html (save to localStorage) //todo ig
 function exportToDrinkReport(entry) {
