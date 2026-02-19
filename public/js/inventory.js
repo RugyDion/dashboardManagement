@@ -235,21 +235,23 @@ function printTable(rows, title) {
         // Write filtered rows
         printWindow.document.write('<tbody>');
         let grandTotal = 0;
-        rows.forEach(row => {
-            printWindow.document.write('<tr>' + row.innerHTML + '</tr>');
 
-            // Only for Sales section, calculate grand total
+        rows.forEach(row => {
+            // Clone the row so we can safely modify the content for printing
+            const cells = Array.from(row.children);
             if (currentPrintSection === 'sales') {
-                const total = parseFloat(row.children[7].textContent.replace(/₦|,/g, '')) || 0;
+                // Format numeric cells with ₦ sign
+                for (let i = 1; i <= 7; i++) {
+                    const value = parseFloat(cells[i].textContent.replace(/₦|,/g, '')) || 0;
+                    cells[i].textContent = '₦' + value.toLocaleString();
+                }
+                // Add to grand total
+                const total = parseFloat(cells[7].textContent.replace(/₦|,/g, '')) || 0;
                 grandTotal += total;
             }
-
-            // Replace amounts with Naira sign
-            if (currentPrintSection === 'sales') {
-                for (let i = 1; i <= 7; i++) {
-                    row.children[i].textContent = '₦' + parseFloat(row.children[i].textContent.replace(/₦|,/g, '')).toLocaleString();
-                }
-            }
+            // Create row HTML
+            const rowHTML = cells.map(cell => `<td>${cell.textContent}</td>`).join('');
+            printWindow.document.write('<tr>' + rowHTML + '</tr>');
         });
 
         // Add grand total row for sales
