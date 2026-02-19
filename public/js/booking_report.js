@@ -7,7 +7,13 @@ document.addEventListener("DOMContentLoaded", function() {
 async function loadBookingReport() {
     const res1 = await fetch("/api/v1/bookings")
     let bks = await res1.json() || [];
-    const completedBookings = bks.filter(booking => !booking.isConfirmed);
+    const completedBookings = bks
+    .filter(booking => !booking.isConfirmed)
+    .sort((a, b) => 
+    new Date(b.completedDate || 0) - new Date(a.completedDate || 0)
+    );
+
+
     const bookingReportDiv = document.getElementById('booking-report');
     bookingReportDiv.innerHTML = ''; // Clear the report section first
 
@@ -56,7 +62,11 @@ async function loadBookingReport() {
                 <tr>
                     <td>${booking.fullName}</td>
                     <td>${booking.phoneNumber}</td>
-                    <td>${booking.durationOfStayStart.slice(0, booking.durationOfStayStart.indexOf("T"))} to ${booking.durationOfStayEnd.slice(0, booking.durationOfStayEnd.indexOf("T"))}</td>
+                    <td>
+                    ${booking.durationOfStayStart ? booking.durationOfStayStart.split("T")[0] : "-"}
+                     to 
+                    ${booking.durationOfStayEnd ? booking.durationOfStayEnd.split("T")[0] : "-"}
+                    </td>
                     <td>${booking.roomNumber}</td>
                     <td>${booking.roomPrice}</td>
                     <td>${booking.roomType}</td>
@@ -134,4 +144,122 @@ async function addBooking() {
 
     // Update the booking count
     updateBookingCount();
+}
+
+
+async function printBookingReport() {
+    const fromDate = document.getElementById("printFromDate").value;
+    const toDate = document.getElementById("printToDate").value;
+
+    if (!fromDate || !toDate) {
+        alert("Please select both From and To dates.");
+        return;
+    }
+
+    const res = await fetch("/api/v1/bookings");
+    let bks = await res.json() || [];
+
+    const filteredBookings = bks.filter(booking => {
+        if (!booking.completedDate) return false;
+        const bookingDate = new Date(booking.completedDate);
+        return (
+            bookingDate >= new Date(fromDate) &&
+            bookingDate <= new Date(toDate + "T23:59:59") &&
+            !booking.isConfirmed
+        );
+    });
+
+    if (filteredBookings.length === 0) {
+        alert("No completed bookings found for selected dates.");
+        return;
+    }
+
+    // 🔥 Calculate Grand Total
+    let grandTotal = 0;
+
+    let printContent = `
+        <html>
+        <head>
+            <title>Booking Report</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 40px;
+                }
+                h1 {
+                    text-align: center;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                }
+                th, td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: left;
+                    font-size: 12px;
+                }
+                th {
+                    background-color: #f2f2f2;
+                }
+                .grand-total {
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+                @page {
+                    size: A4;
+                    margin: 20mm;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Booking Report</h1>
+            <p><strong>From:</strong> ${fromDate} &nbsp;&nbsp; <strong>To:</strong> ${toDate}</p>
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>Full Name</th>
+                    <th>Phone</th>
+                    <th>Room No</th>
+                    <th>Room Type</th>
+                    <th>Days</th>
+                    <th>Total (₦)</th>
+                </tr>
+    `;
+
+    filteredBookings.forEach(booking => {
+        const bookingDate = new Date(booking.completedDate).toLocaleDateString();
+        const totalAmount = Number(booking.totalAmount) || 0;
+
+        grandTotal += totalAmount;
+
+        printContent += `
+            <tr>
+                <td>${bookingDate}</td>
+                <td>${booking.fullName}</td>
+                <td>${booking.phoneNumber}</td>
+                <td>${booking.roomNumber}</td>
+                <td>${booking.roomType}</td>
+                <td>${booking.numberOfDays}</td>
+                <td>₦${totalAmount.toLocaleString()}</td>
+            </tr>
+        `;
+    });
+
+    // 🔥 Add Grand Total Row
+    printContent += `
+                <tr class="grand-total">
+                    <td colspan="6" style="text-align:right;">GRAND TOTAL</td>
+                    <td>₦${grandTotal.toLocaleString()}</td>
+                </tr>
+            </table>
+        </body>
+        </html>
+    `;
+
+    const printWindow = window.open("", "", "width=900,height=700");
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
 }
