@@ -10,25 +10,42 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1>Montevar Hotel - Food Report</h1>
-        <div class="table-container">
-            <table id="foodReportTable" class="styled-table">
-                <thead>
-                    <tr>
-                        <th>Room No</th>
-                        <th>Type of Food and Amount</th>
-                        <th>Payment Method</th>
-                        <th>Service Location</th>
-                        <th>Total Amount</th>
-                        <th>Date of Entry</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+   <div class="container">
+    <h1>Montevar Hotel - Food Report</h1>
+    <div class="table-container">
+        <table id="foodReportTable" class="styled-table">
+            <thead>
+                <tr>
+                    <th>Room No</th>
+                    <th>Type of Food and Amount</th>
+                    <th>Payment Method</th>
+                    <th>Service Location</th>
+                    <th>Total Amount</th>
+                    <th>Date of Entry</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div style="margin-top: 15px;">
+        <button id="printFoodReportBtn" onclick="openPrintModal()" style="padding:10px 20px; background-color:#007bff; color:white; border:none; border-radius:5px; margin-right:10px;">Print Report</button>
         <button id="clearAllBtn" class="clear-btn">Clear All</button>
     </div>
+</div>
+
+<!-- Print Modal -->
+<div id="printModal" class="modal" style="display:none;">
+    <div class="modal-content" style="width:300px; padding:20px; text-align:center; border-radius:5px;">
+        <h3>Select Date Range</h3>
+        <label>From:</label>
+        <input type="date" id="modalFromDate"><br><br>
+        <label>To:</label>
+        <input type="date" id="modalToDate"><br><br>
+        <button onclick="printFoodReport()" style="padding:8px 12px; margin-right:5px;">Print</button>
+        <button onclick="closePrintModal()" style="padding:8px 12px;">Cancel</button>
+    </div>
+</div>
+
     <script src="js/food_report.js"></script>
 </body>
 </html>
