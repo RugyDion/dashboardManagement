@@ -1,9 +1,12 @@
-const salesUrl ="/api/v1/inventory/"
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle Sales Section Submission
-    document.getElementById('salesForm').addEventListener('submit',async function(event) {
+const salesUrl = "/api/v1/inventory/";
+
+document.addEventListener('DOMContentLoaded', function () {
+    let currentPrintSection = ""; // Track which section is being printed
+
+    // ----------------- SALES SECTION -----------------
+    document.getElementById('salesForm').addEventListener('submit', async function (event) {
         event.preventDefault();
-        
+
         const bookingsSales = parseFloat(document.getElementById('bookingsSales').value) || 0;
         const foodSales = parseFloat(document.getElementById('foodSales').value) || 0;
         const drinksSales = parseFloat(document.getElementById('drinksSales').value) || 0;
@@ -15,32 +18,35 @@ document.addEventListener('DOMContentLoaded', function() {
         const dateTime = new Date().toLocaleString();
 
         const salesEntry = {
-            bookingsEndOfDaySales: bookingsSales, foodEndOfDaySales:foodSales, drinksEndOfDaySales:drinksSales, eventsEndOfDaySales:eventsSales,laundryEndOfDaySales: laundrySales, poolEndOfDaySales:poolSales, totalSales, date:dateTime
+            bookingsEndOfDaySales: bookingsSales,
+            foodEndOfDaySales: foodSales,
+            drinksEndOfDaySales: drinksSales,
+            eventsEndOfDaySales: eventsSales,
+            laundryEndOfDaySales: laundrySales,
+            poolEndOfDaySales: poolSales,
+            totalSales,
+            date: dateTime
         };
-        await fetch(`${salesUrl}totalSales`,{
-            method:"POST",
-            headers:{
-                "Content-type":"application/json"
-            },
+
+        await fetch(`${salesUrl}totalSales`, {
+            method: "POST",
+            headers: { "Content-type": "application/json" },
             body: JSON.stringify(salesEntry)
-        } )
-        // let salesEntries = JSON.parse(localStorage.getItem('salesEntries')) || [];
-        // salesEntries.push(salesEntry);
-        // localStorage.setItem('salesEntries', JSON.stringify(salesEntries));
+        });
 
         loadSalesEntries();
         document.getElementById('salesForm').reset();
     });
 
-    // Load Sales Entries
     async function loadSalesEntries() {
-        const res = await fetch(`${salesUrl}totalSales`)
-        const data = await res.json()
+        const res = await fetch(`${salesUrl}totalSales`);
+        const data = await res.json();
         const salesEntries = data.totalSales || [];
         const tableBody = document.getElementById('salesEntriesTable');
         tableBody.innerHTML = '';
 
-        salesEntries.forEach(entry => {
+        // Show latest entries first
+        salesEntries.slice().reverse().forEach(entry => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${entry.date}</td>
@@ -55,49 +61,40 @@ document.addEventListener('DOMContentLoaded', function() {
             tableBody.appendChild(row);
         });
     }
-   
-    // Clear Sales Entries
-    document.getElementById('clearSales').addEventListener('click', async function() {
-        await fetch(`${salesUrl}totalSales`, {
-            method:"DELETE"
-        })
-        // localStorage.removeItem('salesEntries');
+
+    document.getElementById('clearSales').addEventListener('click', async function () {
+        await fetch(`${salesUrl}totalSales`, { method: "DELETE" });
         loadSalesEntries();
     });
 
-    // Handle Storage Section Submission
-    document.getElementById('storageForm').addEventListener('submit', async function(event) {
+    // ----------------- STORAGE SECTION -----------------
+    document.getElementById('storageForm').addEventListener('submit', async function (event) {
         event.preventDefault();
 
         const productName = document.getElementById('productNameStorage').value;
         const quantity = parseInt(document.getElementById('quantityStorage').value) || 0;
         const dateTime = new Date().toLocaleString();
 
-        const storageEntry = { productName, quantity, date:dateTime };
-         await fetch(`${salesUrl}dailyStorageEntry`,{
-            method:"POST",
-            headers:{
-                "Content-type":"application/json"
-            },
+        const storageEntry = { productName, quantity, date: dateTime };
+
+        await fetch(`${salesUrl}dailyStorageEntry`, {
+            method: "POST",
+            headers: { "Content-type": "application/json" },
             body: JSON.stringify(storageEntry)
-         })
-        // let storageEntries = JSON.parse(localStorage.getItem('storageEntries')) || [];
-        // storageEntries.push(storageEntry);
-        // localStorage.setItem('storageEntries', JSON.stringify(storageEntries));
+        });
 
         loadStorageEntries();
         document.getElementById('storageForm').reset();
     });
 
-    // Load Storage Entries
     async function loadStorageEntries() {
-        const res = await fetch(`${salesUrl}dailyStorageEntry`)
-        const data = await res.json()
+        const res = await fetch(`${salesUrl}dailyStorageEntry`);
+        const data = await res.json();
         const storageEntries = data.entries || [];
         const tableBody = document.getElementById('storageEntriesTable');
         tableBody.innerHTML = '';
 
-        storageEntries.forEach(entry => {
+        storageEntries.slice().reverse().forEach(entry => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${entry.date}</td>
@@ -108,48 +105,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Clear Storage Entries
-    document.getElementById('clearStorage').addEventListener('click', async function() {
-        await fetch(`${salesUrl}dailyStorageEntry`, {
-            method:"DELETE"
-        })
+    document.getElementById('clearStorage').addEventListener('click', async function () {
+        await fetch(`${salesUrl}dailyStorageEntry`, { method: "DELETE" });
         loadStorageEntries();
     });
 
-    // Handle Usage Section Submission
-    document.getElementById('usageForm').addEventListener('submit',async function(event) {
+    // ----------------- USAGE SECTION -----------------
+    document.getElementById('usageForm').addEventListener('submit', async function (event) {
         event.preventDefault();
 
         const productName = document.getElementById('productNameUsage').value;
         const quantity = parseInt(document.getElementById('quantityUsage').value) || 0;
         const dateTime = new Date().toLocaleString();
 
-        const usageEntry = { productName, takeOutQuantity: quantity, date:dateTime };
-        
-        await fetch(`${salesUrl}storageUsageEntry`,{
-            method:"POST",
-            headers:{
-                "Content-type":"application/json"
-            },
+        const usageEntry = { productName, takeOutQuantity: quantity, date: dateTime };
+
+        await fetch(`${salesUrl}storageUsageEntry`, {
+            method: "POST",
+            headers: { "Content-type": "application/json" },
             body: JSON.stringify(usageEntry)
-         })
-        // let usageEntries = JSON.parse(localStorage.getItem('usageEntries')) || [];
-        // usageEntries.push(usageEntry);
-        // localStorage.setItem('usageEntries', JSON.stringify(usageEntries));
+        });
 
         loadUsageEntries();
         document.getElementById('usageForm').reset();
     });
 
-    // Load Usage Entries
     async function loadUsageEntries() {
-        const res = await fetch(`${salesUrl}storageUsageEntry`)
-        const data = await res.json()
+        const res = await fetch(`${salesUrl}storageUsageEntry`);
+        const data = await res.json();
         const usageEntries = data.entries || [];
         const tableBody = document.getElementById('usageEntriesTable');
         tableBody.innerHTML = '';
 
-        usageEntries.forEach(entry => {
+        usageEntries.slice().reverse().forEach(entry => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${entry.date}</td>
@@ -160,16 +148,87 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Clear Usage Entries
-    document.getElementById('clearUsage').addEventListener('click',async function() {
-        await fetch(`${salesUrl}storageUsageEntry`, {
-            method:"DELETE"
-        })
-        // localStorage.removeItem('usageEntries');
+    document.getElementById('clearUsage').addEventListener('click', async function () {
+        await fetch(`${salesUrl}storageUsageEntry`, { method: "DELETE" });
         loadUsageEntries();
     });
 
-    // Initial Load
+    // ----------------- PRINT MODAL -----------------
+    window.openPrintModal = function (section) {
+        currentPrintSection = section;
+        document.getElementById('printModal').style.display = 'block';
+    }
+
+    window.closePrintModal = function () {
+        document.getElementById('printModal').style.display = 'none';
+    }
+
+    window.printSection = function () {
+        const fromDate = document.getElementById('modalFromDate').value;
+        const toDate = document.getElementById('modalToDate').value;
+        let rows = [];
+
+        if (currentPrintSection === 'sales') {
+            const tableRows = Array.from(document.querySelectorAll("#salesEntriesTable tr"));
+            rows = tableRows.filter(row => {
+                const dateText = row.children[0].textContent;
+                const rowDate = new Date(dateText);
+                if (fromDate && rowDate < new Date(fromDate)) return false;
+                if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+                return true;
+            });
+            printTable(rows, 'End of Day Sales Report');
+        } else if (currentPrintSection === 'storage') {
+            const tableRows = Array.from(document.querySelectorAll("#storageEntriesTable tr"));
+            rows = tableRows.filter(row => {
+                const dateText = row.children[0].textContent;
+                const rowDate = new Date(dateText);
+                if (fromDate && rowDate < new Date(fromDate)) return false;
+                if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+                return true;
+            });
+            printTable(rows, 'Saved Stock Entries');
+        } else if (currentPrintSection === 'usage') {
+            const tableRows = Array.from(document.querySelectorAll("#usageEntriesTable tr"));
+            rows = tableRows.filter(row => {
+                const dateText = row.children[0].textContent;
+                const rowDate = new Date(dateText);
+                if (fromDate && rowDate < new Date(fromDate)) return false;
+                if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+                return true;
+            });
+            printTable(rows, 'Saved Stock Usage Entries');
+        }
+
+        closePrintModal();
+    }
+
+    function printTable(rows, title) {
+        const printWindow = window.open('', '', 'height=600,width=900');
+        printWindow.document.write('<html><head><title>' + title + '</title>');
+        printWindow.document.write('<style>table{width:100%;border-collapse:collapse;}table,th,td{border:1px solid #000;padding:8px;text-align:left;}h1{text-align:center;}</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write('<h1>' + title + '</h1>');
+        printWindow.document.write('<table>');
+        if (rows.length > 0) {
+            printWindow.document.write('<thead><tr>');
+            Array.from(rows[0].parentElement.parentElement.querySelectorAll('thead th')).forEach(th => {
+                printWindow.document.write('<th>' + th.textContent + '</th>');
+            });
+            printWindow.document.write('</tr></thead>');
+            printWindow.document.write('<tbody>');
+            rows.forEach(row => printWindow.document.write('<tr>' + row.innerHTML + '</tr>'));
+            printWindow.document.write('</tbody>');
+        } else {
+            printWindow.document.write('<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>');
+        }
+        printWindow.document.write('</table>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    // ----------------- INITIAL LOAD -----------------
     loadSalesEntries();
     loadStorageEntries();
     loadUsageEntries();
