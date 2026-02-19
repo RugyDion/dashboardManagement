@@ -2,9 +2,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const foodReportTableBody = document.querySelector("#foodReportTable tbody");
 
     async function loadFoodReportEntries() {
-        const res = await fetch("/api/v1/food")
+        const res = await fetch("/api/v1/food");
         const e = (await res.json()).foods || [];
         const foodReportEntries = e || [];
+
+        // Sort entries: latest date at the top
+        foodReportEntries.sort((a, b) => new Date(b.dateOfEntry) - new Date(a.dateOfEntry));
+
         foodReportTableBody.innerHTML = ""; // Clear before loading
         foodReportEntries.forEach((entry) => {
             addFoodReportEntryToTable(entry);
@@ -34,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const clearAllBtn = document.getElementById("clearAllBtn");
     clearAllBtn.addEventListener("click", async function () {
         await fetch("/api/v1/food", { method: "DELETE" });
-        foodReportTableBody.innerHTML = ""; // Clear table
+        foodReportTableBody.innerHTML = "";
     });
 
     // Modal functions
@@ -69,6 +73,9 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("No food entries found for selected dates.");
             return;
         }
+
+        // Sort filtered entries latest at top
+        filteredEntries.sort((a, b) => new Date(b.dateOfEntry) - new Date(a.dateOfEntry));
 
         // 🔥 Calculate grand total
         let grandTotal = 0;
@@ -134,6 +141,5 @@ document.addEventListener("DOMContentLoaded", function () {
         closePrintModal();
     }
 
-    // Load entries on page load
     loadFoodReportEntries();
 });
