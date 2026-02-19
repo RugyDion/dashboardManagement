@@ -167,93 +167,103 @@ document.addEventListener('DOMContentLoaded', function () {
         loadUsageEntries();
     });
 
-    // ----------------- PRINT MODAL -----------------
-    window.openPrintModal = function (section) {
-        currentPrintSection = section;
-        document.getElementById('printModal').style.display = 'block';
+   // ----------------- PRINT MODAL -----------------
+window.openPrintModal = function (section) {
+    currentPrintSection = section;
+    document.getElementById('printModal').style.display = 'block';
+}
+
+window.closePrintModal = function () {
+    document.getElementById('printModal').style.display = 'none';
+}
+
+window.printSection = function () {
+    const fromDate = document.getElementById('modalFromDate').value;
+    const toDate = document.getElementById('modalToDate').value;
+    let rows = [];
+
+    if (currentPrintSection === 'sales') {
+        const tableRows = Array.from(document.querySelectorAll("#salesEntriesTable tr"));
+        rows = tableRows.filter(row => {
+            const dateText = row.children[0].textContent;
+            const rowDate = new Date(dateText);
+            if (fromDate && rowDate < new Date(fromDate)) return false;
+            if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+            return true;
+        });
+        printTable(rows, 'End of Day Sales Report');
+    } else if (currentPrintSection === 'storage') {
+        const tableRows = Array.from(document.querySelectorAll("#storageEntriesTable tr"));
+        rows = tableRows.filter(row => {
+            const dateText = row.children[0].textContent;
+            const rowDate = new Date(dateText);
+            if (fromDate && rowDate < new Date(fromDate)) return false;
+            if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+            return true;
+        });
+        printTable(rows, 'Saved Stock Entries');
+    } else if (currentPrintSection === 'usage') {
+        const tableRows = Array.from(document.querySelectorAll("#usageEntriesTable tr"));
+        rows = tableRows.filter(row => {
+            const dateText = row.children[0].textContent;
+            const rowDate = new Date(dateText);
+            if (fromDate && rowDate < new Date(fromDate)) return false;
+            if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+            return true;
+        });
+        printTable(rows, 'Saved Stock Usage Entries');
     }
 
-    window.closePrintModal = function () {
-        document.getElementById('printModal').style.display = 'none';
-    }
+    closePrintModal();
+}
 
-    window.printSection = function () {
-        const fromDate = document.getElementById('modalFromDate').value;
-        const toDate = document.getElementById('modalToDate').value;
-        let rows = [];
+function printTable(rows, title) {
+    const printWindow = window.open('', '', 'height=600,width=900');
+    printWindow.document.write('<html><head><title>' + title + '</title>');
+    printWindow.document.write('<style>table{width:100%;border-collapse:collapse;}table,th,td{border:1px solid #000;padding:8px;text-align:left;}h1{text-align:center;}</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<h1>' + title + '</h1>');
+    printWindow.document.write('<table>');
 
-        if (currentPrintSection === 'sales') {
-            const tableRows = Array.from(document.querySelectorAll("#salesEntriesTable tr"));
-            rows = tableRows.filter(row => {
-                const dateText = row.children[0].textContent;
-                const rowDate = new Date(dateText);
-                if (fromDate && rowDate < new Date(fromDate)) return false;
-                if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
-                return true;
-            });
-            printTable(rows, 'End of Day Sales Report');
-        } else if (currentPrintSection === 'storage') {
-            const tableRows = Array.from(document.querySelectorAll("#storageEntriesTable tr"));
-            rows = tableRows.filter(row => {
-                const dateText = row.children[0].textContent;
-                const rowDate = new Date(dateText);
-                if (fromDate && rowDate < new Date(fromDate)) return false;
-                if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
-                return true;
-            });
-            printTable(rows, 'Saved Stock Entries');
-        } else if (currentPrintSection === 'usage') {
-            const tableRows = Array.from(document.querySelectorAll("#usageEntriesTable tr"));
-            rows = tableRows.filter(row => {
-                const dateText = row.children[0].textContent;
-                const rowDate = new Date(dateText);
-                if (fromDate && rowDate < new Date(fromDate)) return false;
-                if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
-                return true;
-            });
-            printTable(rows, 'Saved Stock Usage Entries');
-        }
+    if (rows.length > 0) {
+        // Write table header
+        const ths = rows[0].parentElement.parentElement.querySelectorAll('thead th');
+        printWindow.document.write('<thead><tr>');
+        ths.forEach(th => printWindow.document.write('<th>' + th.textContent + '</th>'));
+        printWindow.document.write('</tr></thead>');
 
-        closePrintModal();
-    }
+        // Write filtered rows
+        printWindow.document.write('<tbody>');
+        let grandTotal = 0;
+        rows.forEach(row => {
+            printWindow.document.write('<tr>' + row.innerHTML + '</tr>');
 
-    function printTable(rows, title) {
-        const printWindow = window.open('', '', 'height=600,width=900');
-        printWindow.document.write('<html><head><title>' + title + '</title>');
-        printWindow.document.write('<style>table{width:100%;border-collapse:collapse;}table,th,td{border:1px solid #000;padding:8px;text-align:left;}h1{text-align:center;}</style>');
-        printWindow.document.write('</head><body>');
-        printWindow.document.write('<h1>' + title + '</h1>');
-        printWindow.document.write('<table>');
-        if (rows.length > 0) {
-            printWindow.document.write('<thead><tr>');
-            Array.from(rows[0].parentElement.parentElement.querySelectorAll('thead th')).forEach(th => {
-                printWindow.document.write('<th>' + th.textContent + '</th>');
-            });
-            printWindow.document.write('</tr></thead>');
-            printWindow.document.write('<tbody>');
-            rows.forEach(row => printWindow.document.write('<tr>' + row.innerHTML + '</tr>'));
-
-            // Grand total row for Sales section only
+            // Only for Sales section, calculate grand total
             if (currentPrintSection === 'sales') {
-                let grandTotal = rows.reduce((sum, row) => {
-                    const total = parseFloat(row.children[7].textContent.replace(/₦|,/g, '')) || 0;
-                    return sum + total;
-                }, 0);
-                printWindow.document.write('<tr style="font-weight:bold;"><td colspan="7" style="text-align:right;">Grand Total:</td><td>₦' + grandTotal.toLocaleString() + '</td></tr>');
+                const total = parseFloat(row.children[7].textContent.replace(/₦|,/g, '')) || 0;
+                grandTotal += total;
             }
 
-            printWindow.document.write('</tbody>');
-        } else {
-            printWindow.document.write('<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>');
+            // Replace amounts with Naira sign
+            if (currentPrintSection === 'sales') {
+                for (let i = 1; i <= 7; i++) {
+                    row.children[i].textContent = '₦' + parseFloat(row.children[i].textContent.replace(/₦|,/g, '')).toLocaleString();
+                }
+            }
+        });
+
+        // Add grand total row for sales
+        if (currentPrintSection === 'sales') {
+            printWindow.document.write('<tr style="font-weight:bold;"><td colspan="7" style="text-align:right;">Grand Total:</td><td>₦' + grandTotal.toLocaleString() + '</td></tr>');
         }
-        printWindow.document.write('</table>');
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.print();
+
+        printWindow.document.write('</tbody>');
+    } else {
+        printWindow.document.write('<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>');
     }
 
-    // ----------------- INITIAL LOAD -----------------
-    loadSalesEntries();
-    loadStorageEntries();
-    loadUsageEntries();
-});
+    printWindow.document.write('</table>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+}
