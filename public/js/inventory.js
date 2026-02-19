@@ -45,21 +45,35 @@ document.addEventListener('DOMContentLoaded', function () {
         const tableBody = document.getElementById('salesEntriesTable');
         tableBody.innerHTML = '';
 
+        let grandTotal = 0;
+
         // Show latest entries first
         salesEntries.slice().reverse().forEach(entry => {
+            grandTotal += entry.totalSales;
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${entry.date}</td>
-                <td>${entry.bookingsEndOfDaySales}</td>
-                <td>${entry.foodEndOfDaySales}</td>
-                <td>${entry.drinksEndOfDaySales}</td>
-                <td>${entry.eventsEndOfDaySales}</td>
-                <td>${entry.laundryEndOfDaySales}</td>
-                <td>${entry.poolEndOfDaySales}</td>
-                <td>${entry.totalSales}</td>
+                <td>₦${entry.bookingsEndOfDaySales.toLocaleString()}</td>
+                <td>₦${entry.foodEndOfDaySales.toLocaleString()}</td>
+                <td>₦${entry.drinksEndOfDaySales.toLocaleString()}</td>
+                <td>₦${entry.eventsEndOfDaySales.toLocaleString()}</td>
+                <td>₦${entry.laundryEndOfDaySales.toLocaleString()}</td>
+                <td>₦${entry.poolEndOfDaySales.toLocaleString()}</td>
+                <td>₦${entry.totalSales.toLocaleString()}</td>
             `;
             tableBody.appendChild(row);
         });
+
+        // Add Grand Total Row
+        if (salesEntries.length > 0) {
+            const totalRow = document.createElement('tr');
+            totalRow.style.fontWeight = 'bold';
+            totalRow.innerHTML = `
+                <td colspan="7" style="text-align:right;">Grand Total:</td>
+                <td>₦${grandTotal.toLocaleString()}</td>
+            `;
+            tableBody.appendChild(totalRow);
+        }
     }
 
     document.getElementById('clearSales').addEventListener('click', async function () {
@@ -218,6 +232,16 @@ document.addEventListener('DOMContentLoaded', function () {
             printWindow.document.write('</tr></thead>');
             printWindow.document.write('<tbody>');
             rows.forEach(row => printWindow.document.write('<tr>' + row.innerHTML + '</tr>'));
+
+            // Grand total row for Sales section only
+            if (currentPrintSection === 'sales') {
+                let grandTotal = rows.reduce((sum, row) => {
+                    const total = parseFloat(row.children[7].textContent.replace(/₦|,/g, '')) || 0;
+                    return sum + total;
+                }, 0);
+                printWindow.document.write('<tr style="font-weight:bold;"><td colspan="7" style="text-align:right;">Grand Total:</td><td>₦' + grandTotal.toLocaleString() + '</td></tr>');
+            }
+
             printWindow.document.write('</tbody>');
         } else {
             printWindow.document.write('<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>');
