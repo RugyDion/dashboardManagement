@@ -83,8 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         
     });
-
- // ----------------- STORAGE SECTION -----------------
+// ----------------- STORAGE SECTION -----------------
 document.getElementById('storageForm').addEventListener('submit', async function (event) {
     event.preventDefault();
 
@@ -102,7 +101,7 @@ document.getElementById('storageForm').addEventListener('submit', async function
     });
 
     // Reload storage table with updated totals
-    loadStorageEntries();
+    await loadStorageEntries();
     document.getElementById('storageForm').reset();
 });
 
@@ -110,16 +109,16 @@ document.getElementById('storageForm').addEventListener('submit', async function
 async function loadStorageEntries() {
     const res = await fetch(`${salesUrl}dailyStorageEntry`);
     const data = await res.json();
-    storageData = data.entries || [];
+    const rawStorageData = data.entries || [];
 
     const tableBody = document.getElementById('storageEntriesTable');
     tableBody.innerHTML = '';
 
-    let stockTotals = {}; // cumulative stock including usage
-    let calculatedEntries = [];
+    // Track cumulative stock per product
+    let stockTotals = {};
+    const sorted = [...rawStorageData].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Sort oldest → newest
-    const sorted = [...storageData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    let calculatedEntries = [];
 
     sorted.forEach(entry => {
         if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
@@ -131,7 +130,7 @@ async function loadStorageEntries() {
         });
     });
 
-    // save back to storageData for usage calculation
+    // Save to storageData for usage calculation
     storageData = calculatedEntries;
 
     // Display newest first
@@ -146,17 +145,15 @@ async function loadStorageEntries() {
         tableBody.appendChild(row);
     });
 
-    // Reload usage to update remaining stock
-    loadUsageEntries();
+    // Update usage entries to reflect new stock
+    await loadUsageEntries();
 }
-
 
 // Clear storage entries
 document.getElementById('clearStorage').addEventListener('click', async function () {
     await fetch(`${salesUrl}dailyStorageEntry`, { method: "DELETE" });
-    loadStorageEntries();
+    await loadStorageEntries();
 });
-
 
 
 // ----------------- USAGE SECTION -----------------
@@ -175,39 +172,41 @@ document.getElementById('usageForm').addEventListener('submit', async function(e
         body: JSON.stringify(usageEntry)
     });
 
-    loadUsageEntries();
+    await loadUsageEntries();
     document.getElementById('usageForm').reset();
 });
 
-    
-
-    async function loadUsageEntries() {
+async function loadUsageEntries() {
     const res = await fetch(`${salesUrl}storageUsageEntry`);
     const data = await res.json();
-    usageData = data.entries || [];
+    const rawUsageData = data.entries || [];
 
     const tableBody = document.getElementById('usageEntriesTable');
     tableBody.innerHTML = '';
 
-    let stockTotals = {}; // copy from storageData to start
+    // Build stock totals from storageData first
+    let stockTotals = {};
     storageData.forEach(entry => {
-        stockTotals[entry.productName] = entry.totalAfter || 0;
+        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
+        stockTotals[entry.productName] += entry.quantity;
     });
 
+    // Subtract all usage chronologically
+    const sortedUsage = [...rawUsageData].sort((a, b) => new Date(a.date) - new Date(b.date));
     let calculatedUsage = [];
-    // Sort oldest → newest
-    const sortedUsage = [...usageData].sort((a, b) => new Date(a.date) - new Date(b.date));
+
     sortedUsage.forEach(entry => {
         if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
+
         stockTotals[entry.productName] -= entry.takeOutQuantity;
 
         calculatedUsage.push({
             ...entry,
-            remaining: stockTotals[entry.productName]
+            remaining: stockTotals[entry.productName] >= 0 ? stockTotals[entry.productName] : 0
         });
     });
 
-    // save back to usageData for print
+    // Save back to usageData for printing
     usageData = calculatedUsage;
 
     // Display newest first
@@ -223,12 +222,12 @@ document.getElementById('usageForm').addEventListener('submit', async function(e
     });
 }
 
+// Clear usage entries
+document.getElementById('clearUsage').addEventListener('click', async function () {
+    await fetch(`${salesUrl}storageUsageEntry`, { method: "DELETE" });
+    await loadUsageEntries();
+});
 
-
-    document.getElementById('clearUsage').addEventListener('click', async function () {
-        await fetch(`${salesUrl}storageUsageEntry`, { method: "DELETE" });
-        loadUsageEntries();
-    });
 
    // ----------------- PRINT MODAL -----------------
 let salesData = [];   // hold fetched sales entries
