@@ -65,11 +65,12 @@
             </div>
             </div>
             <button id="clearSales" class="clear-btn">Clear All Sales</button>
+            <button id="printSales" class="print-btn" onclick="openPrintModal('sales')">Print Sales</button>
         </section>
 
         <!-- Storage Section -->
         <section id="storageSection">
-            <h2>Daily Storage</h2>
+            <h2>Entry Stock</h2>
             <form id="storageForm">
                 <div class="form-group">
                     <label for="productNameStorage">Product Name</label>
@@ -83,7 +84,7 @@
             </form>
             
             <div id="storageResults">
-                <h3>Saved Storage Entries</h3>
+                <h3>Saved Stock Entries</h3>
                 <table>
                     <thead>
                         <tr>
@@ -98,11 +99,12 @@
                 </table>
             </div>
             <button id="clearStorage" class="clear-btn">Clear All Storage</button>
+            <button id="printStorage" class="print-btn" onclick="openPrintModal('storage')">Print Storage</button>
         </section>
 
         <!-- Usage Section -->
         <section id="usageSection">
-            <h2>Usage from Storage</h2>
+            <h2>Usage from Stock</h2>
             <form id="usageForm">
                 <div class="form-group">
                     <label for="productNameUsage">Product Name</label>
@@ -116,7 +118,7 @@
             </form>
             
             <div id="usageResults">
-                <h3>Saved Usage Entries</h3>
+                <h3>Saved Stock Usage Entries</h3>
                 <table>
                     <thead>
                         <tr>
@@ -131,8 +133,30 @@
                 </table>
             </div>
             <button id="clearUsage" class="clear-btn">Clear All Usage</button>
+            <button id="printUsage" class="print-btn" onclick="openPrintModal('usage')">Print Usage</button>
         </section>
     </div>
+
+    <!-- Reusable Print Modal -->
+<div id="printModal" class="modal">
+    <div class="modal-content">
+        <h3>Select Date Range</h3>
+        <label>From:</label>
+        <input type="date" id="modalFromDate"><br>
+        <label>To:</label>
+        <input type="date" id="modalToDate"><br>
+        <button onclick="printSection()">Print</button>
+        <button onclick="closePrintModal()">Cancel</button>
+    </div>
+</div>
+
+<style>
+.modal { display: none; position: fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5);}
+.modal-content { background:#fff; margin:15% auto; padding:20px; width:300px; border-radius:5px; text-align:center;}
+.modal-content input { width:90%; padding:6px; margin:10px 0;}
+.modal-content button { margin:5px; padding:8px 12px;}
+.print-btn { padding:10px 20px; margin-left:10px; background:#007bff; color:white; border:none; border-radius:5px;}
+</style>
 
     <script src="js/inventory.js"></script>
 </body>
