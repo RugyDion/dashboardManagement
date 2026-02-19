@@ -153,6 +153,28 @@ document.getElementById('clearStorage').addEventListener('click', async function
 
 
 // ----------------- USAGE SECTION -----------------
+document.getElementById('usageForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const productName = document.getElementById('productNameUsage').value;
+    const takeOutQuantity = parseInt(document.getElementById('quantityUsage').value) || 0;
+    const dateTime = new Date().toLocaleString();
+
+    const usageEntry = { productName, takeOutQuantity, date: dateTime };
+
+    await fetch(`${salesUrl}storageUsageEntry`, {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
+        body: JSON.stringify(usageEntry)
+    });
+
+    loadUsageEntries();
+    document.getElementById('usageForm').reset();
+});
+
+    
+
+    
 async function loadUsageEntries() {
     const res = await fetch(`${salesUrl}storageUsageEntry`);
     const data = await res.json();
