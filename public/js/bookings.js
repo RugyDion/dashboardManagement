@@ -46,9 +46,10 @@ async function loadBookings() {
                     <td>${booking.numberOfDays}</td>
                     <td>${booking.totalAmount}</td>
                     <td>
-                        <button class="action-button" onclick="editBooking(${index})">Edit</button>
-                        <button class="action-button" onclick="printBooking(${index})">Print</button>
-                        <button class="action-button" onclick="checkoutBooking(${index})">Check Out</button>
+                        <button onclick="editBooking('${booking._id}')">Edit</button>
+                        <button onclick="printBooking('${booking._id}')">Print</button>
+                        <button onclick="checkoutBooking('${booking._id}')">Check Out</button>
+
                     </td>
                 </tr>
             </table>
@@ -169,11 +170,11 @@ function clearRoomFields() {
 } 
 
 // Edit booking functionality
- async function editBooking(index) {
+ async function editBooking(id) {
     const res1 = await fetch("/api/v1/bookings")
     const completedBookings = await res1.json() || [];
     const bookings = completedBookings.filter(b => b.isConfirmed)
-    const booking = bookings[index];
+    const booking = bookings.find(b => b._id === id);
     if(booking.isPrint){
         alert("Can't edit after print")
         return
@@ -218,11 +219,12 @@ window.onload = function () {
 };
 
 // Print booking details
-async function printBooking(index) {
+async function printBooking(id)
     const res1 = await fetch("/api/v1/bookings")
     const completedBookings = await res1.json() || [];
     const bookings = completedBookings.filter(b => b.isConfirmed);
-    const booking = bookings[index];
+    const booking = bookings.find(b => b._id === id);
+
 
     const printWindow = window.open('', '', 'width=400,height=600');
 
@@ -361,11 +363,12 @@ async function printBooking(index) {
 
 // Checkout booking and remove from the confirmed bookings
 // Checkout function
-async function checkoutBooking(index) {
+async function checkoutBooking(id)
     const res1 = await fetch("/api/v1/bookings")
     const completedBookings = await res1.json() || [];
     const bookings = completedBookings.filter(b => b.isConfirmed);
-    const booking = bookings[index];
+    const booking = bookings.find(b => b._id === id);
+
 
     // Create checkout data object
     const checkoutData = {
@@ -391,7 +394,7 @@ async function checkoutBooking(index) {
     completedBookings.push(checkoutData);
     checkoutData.isConfirmed = false
     checkoutData.edit = true;
-    checkoutData._id = bookings[index]._id
+    checkoutData._id = booking._id
     const res = await fetch("/api/v1/bookings", {
         method:"POST",
         headers:{
