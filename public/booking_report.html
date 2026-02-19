@@ -12,11 +12,39 @@
     <div class="heading">
         <h1>Booking Report - Montevar Hotel</h1>
     </div>
+
     <div class="table-container">
-    <div id="booking-report"></div>
+        <div id="booking-report"></div>
     </div>
-    <button id="clear-bookings-button" onclick="clearBookings()">Clear All Bookings</button>
-    
+
+    <!-- 🔥 Report Action Buttons Section -->
+    <div style="margin-top:20px; text-align:center;">
+        
+        <label>
+            From:
+            <input type="date" id="printFromDate">
+        </label>
+
+        <label style="margin-left:10px;">
+            To:
+            <input type="date" id="printToDate">
+        </label>
+
+        <button 
+            onclick="printBookingReport()" 
+            style="margin-left:10px;">
+            Print Report
+        </button>
+
+        <button 
+            id="clear-bookings-button" 
+            onclick="clearBookings()" 
+            style="margin-left:10px;">
+            Clear All Bookings
+        </button>
+
+    </div>
+
     <script src="js/booking_report.js"></script>
 </body>
 </html>
