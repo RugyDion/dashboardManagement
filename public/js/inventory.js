@@ -115,10 +115,10 @@ async function loadStorageEntries() {
     const tableBody = document.getElementById('storageEntriesTable');
     tableBody.innerHTML = '';
 
-    let stockTotals = {};
+    let stockTotals = {}; // cumulative stock including usage
     let calculatedEntries = [];
 
-    // Sort oldest → newest for correct total calculation
+    // Sort oldest → newest
     const sorted = [...storageData].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     sorted.forEach(entry => {
@@ -131,8 +131,11 @@ async function loadStorageEntries() {
         });
     });
 
+    // save back to storageData for usage calculation
+    storageData = calculatedEntries;
+
     // Display newest first
-    calculatedEntries.reverse().forEach(entry => {
+    calculatedEntries.slice().reverse().forEach(entry => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${entry.date}</td>
@@ -142,7 +145,11 @@ async function loadStorageEntries() {
         `;
         tableBody.appendChild(row);
     });
+
+    // Reload usage to update remaining stock
+    loadUsageEntries();
 }
+
 
 // Clear storage entries
 document.getElementById('clearStorage').addEventListener('click', async function () {
@@ -174,8 +181,7 @@ document.getElementById('usageForm').addEventListener('submit', async function(e
 
     
 
-    
-async function loadUsageEntries() {
+    async function loadUsageEntries() {
     const res = await fetch(`${salesUrl}storageUsageEntry`);
     const data = await res.json();
     usageData = data.entries || [];
@@ -183,16 +189,13 @@ async function loadUsageEntries() {
     const tableBody = document.getElementById('usageEntriesTable');
     tableBody.innerHTML = '';
 
-    let stockTotals = {};
-
-    // Calculate total stock from storage
-    const sortedStorage = [...storageData].sort((a, b) => new Date(a.date) - new Date(b.date));
-    sortedStorage.forEach(entry => {
-        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
-        stockTotals[entry.productName] += entry.quantity;
+    let stockTotals = {}; // copy from storageData to start
+    storageData.forEach(entry => {
+        stockTotals[entry.productName] = entry.totalAfter || 0;
     });
 
     let calculatedUsage = [];
+    // Sort oldest → newest
     const sortedUsage = [...usageData].sort((a, b) => new Date(a.date) - new Date(b.date));
     sortedUsage.forEach(entry => {
         if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
@@ -204,8 +207,11 @@ async function loadUsageEntries() {
         });
     });
 
+    // save back to usageData for print
+    usageData = calculatedUsage;
+
     // Display newest first
-    calculatedUsage.reverse().forEach(entry => {
+    calculatedUsage.slice().reverse().forEach(entry => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${entry.date}</td>
