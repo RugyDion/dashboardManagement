@@ -84,86 +84,118 @@ document.addEventListener('DOMContentLoaded', function () {
         
     });
 
-    // ----------------- STORAGE SECTION -----------------
-    document.getElementById('storageForm').addEventListener('submit', async function (event) {
-        event.preventDefault();
+ // ----------------- STORAGE SECTION -----------------
+document.getElementById('storageForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
 
-        const productName = document.getElementById('productNameStorage').value;
-        const quantity = parseInt(document.getElementById('quantityStorage').value) || 0;
-        const dateTime = new Date().toLocaleString();
+    const productName = document.getElementById('productNameStorage').value;
+    const quantity = parseInt(document.getElementById('quantityStorage').value) || 0;
+    const dateTime = new Date().toLocaleString();
 
-        const storageEntry = { productName, quantity, date: dateTime };
+    const storageEntry = { productName, quantity, date: dateTime };
 
-        await fetch(`${salesUrl}dailyStorageEntry`, {
-            method: "POST",
-            headers: { "Content-type": "application/json" },
-            body: JSON.stringify(storageEntry)
-        });
-
-        loadStorageEntries();
-        document.getElementById('storageForm').reset();
+    // Add new stock entry to backend
+    await fetch(`${salesUrl}dailyStorageEntry`, {
+        method: "POST",
+        headers: { "Content-type": "application/json" },
+        body: JSON.stringify(storageEntry)
     });
 
-    async function loadStorageEntries() {
-        const res = await fetch(`${salesUrl}dailyStorageEntry`);
-        const data = await res.json();
-        storageData = data.entries || [];
-        const tableBody = document.getElementById('storageEntriesTable');
-        tableBody.innerHTML = '';
+    // Reload storage table with updated totals
+    loadStorageEntries();
+    document.getElementById('storageForm').reset();
+});
 
-        storageData.slice().reverse().forEach(entry => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${entry.date}</td>
-                <td>${entry.productName}</td>
-                <td>${entry.quantity}</td>
-            `;
-            tableBody.appendChild(row);
+// Load storage entries and calculate totalAfter
+async function loadStorageEntries() {
+    const res = await fetch(`${salesUrl}dailyStorageEntry`);
+    const data = await res.json();
+    storageData = data.entries || [];
+
+    const tableBody = document.getElementById('storageEntriesTable');
+    tableBody.innerHTML = '';
+
+    let stockTotals = {};
+    let calculatedEntries = [];
+
+    // Sort oldest → newest for correct total calculation
+    const sorted = [...storageData].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    sorted.forEach(entry => {
+        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
+        stockTotals[entry.productName] += entry.quantity;
+
+        calculatedEntries.push({
+            ...entry,
+            totalAfter: stockTotals[entry.productName]
         });
-    }
-
-    document.getElementById('clearStorage').addEventListener('click', async function () {
-        await fetch(`${salesUrl}dailyStorageEntry`, { method: "DELETE" });
-        loadStorageEntries();
     });
 
-    // ----------------- USAGE SECTION -----------------
-    document.getElementById('usageForm').addEventListener('submit', async function (event) {
-        event.preventDefault();
+    // Display newest first
+    calculatedEntries.reverse().forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${entry.date}</td>
+            <td>${entry.productName}</td>
+            <td>${entry.quantity}</td>
+            <td>${entry.totalAfter}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
 
-        const productName = document.getElementById('productNameUsage').value;
-        const quantity = parseInt(document.getElementById('quantityUsage').value) || 0;
-        const dateTime = new Date().toLocaleString();
+// Clear storage entries
+document.getElementById('clearStorage').addEventListener('click', async function () {
+    await fetch(`${salesUrl}dailyStorageEntry`, { method: "DELETE" });
+    loadStorageEntries();
+});
 
-        const usageEntry = { productName, takeOutQuantity: quantity, date: dateTime };
 
-        await fetch(`${salesUrl}storageUsageEntry`, {
-            method: "POST",
-            headers: { "Content-type": "application/json" },
-            body: JSON.stringify(usageEntry)
-        });
 
-        loadUsageEntries();
-        document.getElementById('usageForm').reset();
+// ----------------- USAGE SECTION -----------------
+async function loadUsageEntries() {
+    const res = await fetch(`${salesUrl}storageUsageEntry`);
+    const data = await res.json();
+    usageData = data.entries || [];
+
+    const tableBody = document.getElementById('usageEntriesTable');
+    tableBody.innerHTML = '';
+
+    let stockTotals = {};
+
+    // Calculate total stock from storage
+    const sortedStorage = [...storageData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    sortedStorage.forEach(entry => {
+        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
+        stockTotals[entry.productName] += entry.quantity;
     });
 
-    async function loadUsageEntries() {
-        const res = await fetch(`${salesUrl}storageUsageEntry`);
-        const data = await res.json();
-        usageData = data.entries || [];
-        const tableBody = document.getElementById('usageEntriesTable');
-        tableBody.innerHTML = '';
+    let calculatedUsage = [];
+    const sortedUsage = [...usageData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    sortedUsage.forEach(entry => {
+        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
+        stockTotals[entry.productName] -= entry.takeOutQuantity;
 
-        usageData.slice().reverse().forEach(entry => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${entry.date}</td>
-                <td>${entry.productName}</td>
-                <td>${entry.takeOutQuantity}</td>
-            `;
-            tableBody.appendChild(row);
+        calculatedUsage.push({
+            ...entry,
+            remaining: stockTotals[entry.productName]
         });
-    }
+    });
+
+    // Display newest first
+    calculatedUsage.reverse().forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${entry.date}</td>
+            <td>${entry.productName}</td>
+            <td>${entry.takeOutQuantity}</td>
+            <td>${entry.remaining}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+
 
     document.getElementById('clearUsage').addEventListener('click', async function () {
         await fetch(`${salesUrl}storageUsageEntry`, { method: "DELETE" });
@@ -234,10 +266,12 @@ function printTable(entries, title) {
         if (currentPrintSection === 'sales') {
             printWindow.document.write('<thead><tr><th>Date</th><th>Bookings</th><th>Food</th><th>Drinks</th><th>Events</th><th>Laundry</th><th>Pool</th><th>Total</th></tr></thead>');
         } else if (currentPrintSection === 'storage') {
-            printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity</th></tr></thead>');
-        } else if (currentPrintSection === 'usage') {
-            printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity Taken Out</th></tr></thead>');
+        printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity</th><th>Total After</th></tr></thead>');
+        }else if (currentPrintSection === 'usage') {
+            printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity Taken Out</th><th>Remaining</th></tr></thead>');
         }
+
+
 
         // Table body
         printWindow.document.write('<tbody>');
@@ -265,18 +299,22 @@ function printTable(entries, title) {
                     <td>₦${total.toLocaleString()}</td>
                 </tr>`);
             } else if (currentPrintSection === 'storage') {
-                printWindow.document.write(`<tr>
-                    <td>${entry.date}</td>
-                    <td>${entry.productName}</td>
-                    <td>${entry.quantity}</td>
-                </tr>`);
+                    printWindow.document.write(`<tr>
+                        <td>${entry.date}</td>
+                        <td>${entry.productName}</td>
+                        <td>${entry.quantity}</td>
+                        <td>${entry.totalAfter}</td>
+                    </tr>`);
+
             } else if (currentPrintSection === 'usage') {
                 printWindow.document.write(`<tr>
                     <td>${entry.date}</td>
                     <td>${entry.productName}</td>
                     <td>${entry.takeOutQuantity}</td>
+                    <td>${entry.remaining}</td>
                 </tr>`);
-            }
+                }
+
         });
 
         // Add grand total for sales
@@ -288,9 +326,10 @@ function printTable(entries, title) {
         }
 
         printWindow.document.write('</tbody>');
-    } else {
-        printWindow.document.write('<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>');
-    }
+        } else {
+        printWindow.document.write('<tbody><tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr></tbody>');
+        }
+
 
     printWindow.document.write('</table>');
     printWindow.document.write('</body></html>');
