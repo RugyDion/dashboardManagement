@@ -79,6 +79,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('clearSales').addEventListener('click', async function () {
         await fetch(`${salesUrl}totalSales`, { method: "DELETE" });
         loadSalesEntries();
+
+
+        
     });
 
     // ----------------- STORAGE SECTION -----------------
@@ -294,4 +297,9 @@ function printTable(entries, title) {
     printWindow.document.close();
     printWindow.print();
 }
+
+     // Load existing data immediately when page opens
+        loadSalesEntries();
+        loadStorageEntries();
+        loadUsageEntries();
 });
