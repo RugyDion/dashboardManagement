@@ -130,18 +130,21 @@ async function bookNow() {
     const bookings = completedBookings.filter(b => b.isConfirmed)
 
     // Check if the room has already been booked
-    const roomExists = bookings.some(booking => booking.roomNo === roomNo);
+    const roomExists = bookings.some(b => 
+    b.roomNumber === roomNo && b._id !== currentUpdateId
+    );
     if (!roomExists) {
         newBooking.isConfirmed = true
-        if (edit){
-            console.log(edit)
-            newBooking.edit = edit
-            newBooking._id = currentUpdateId
-            edit = false 
+        if (edit) {
+        newBooking._id = currentUpdateId;
+        newBooking.edit = true;
+        } else {
+            newBooking.edit = false;
         }
+
         
         
-        bookings.push(newBooking);
+        
         try{
             const re = await fetch("/api/v1/bookings", {
                 method:"POST",
@@ -154,8 +157,10 @@ async function bookNow() {
             console.log(e.message)
         }
        // localStorage.setItem('confirmedBookings', JSON.stringify(bookings));
+        edit = false;
+        currentUpdateId = "";
         loadBookings();
-        window.location.reload()
+        window.location.reload();
         document.getElementById('booking-form').reset();
     } else {
         alert('This room has already been booked. Please select a different room.');
@@ -219,7 +224,7 @@ window.onload = function () {
 };
 
 // Print booking details
-async function printBooking(id)
+async function printBooking(id) {
     const res1 = await fetch("/api/v1/bookings")
     const completedBookings = await res1.json() || [];
     const bookings = completedBookings.filter(b => b.isConfirmed);
@@ -363,7 +368,7 @@ async function printBooking(id)
 
 // Checkout booking and remove from the confirmed bookings
 // Checkout function
-async function checkoutBooking(id)
+async function checkoutBooking(id) {
     const res1 = await fetch("/api/v1/bookings")
     const completedBookings = await res1.json() || [];
     const bookings = completedBookings.filter(b => b.isConfirmed);
@@ -410,10 +415,7 @@ async function checkoutBooking(id)
     // updateBookingCount(); undefined
 
     // Remove the booking from the DOM immediately (without page reload)
-    const bookingItem = document.querySelector(`#confirmed-booking-${index}`);  // Dynamically get the booking item by its unique ID
-    if (bookingItem) {
-        bookingItem.remove();  // Remove the checked-out booking item from the DOM
-    }
+    
 
     // Update the booking report
     //loadBookingReport();
