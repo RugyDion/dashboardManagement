@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Add Grand Total Row
-        if (salesEntries.length > 0) {
+        if (salesData.length > 0) {
             const totalRow = document.createElement('tr');
             totalRow.style.fontWeight = 'bold';
             totalRow.innerHTML = `
