@@ -147,14 +147,26 @@ async function addBooking() {
 }
 
 
+// 🔥 Modal controls
+function openPrintModal() {
+    document.getElementById('printModal').style.display = 'block';
+}
+
+function closePrintModal() {
+    document.getElementById('printModal').style.display = 'none';
+}
+
+// 🔥 Updated printBookingReport function to use modal dates
 async function printBookingReport() {
-    const fromDate = document.getElementById("printFromDate").value;
-    const toDate = document.getElementById("printToDate").value;
+    const fromDate = document.getElementById("modalFromDate").value;
+    const toDate = document.getElementById("modalToDate").value;
 
     if (!fromDate || !toDate) {
         alert("Please select both From and To dates.");
         return;
     }
+
+    closePrintModal(); // Close the modal once dates are selected
 
     const res = await fetch("/api/v1/bookings");
     let bks = await res.json() || [];
@@ -182,35 +194,13 @@ async function printBookingReport() {
         <head>
             <title>Booking Report</title>
             <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    padding: 40px;
-                }
-                h1 {
-                    text-align: center;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 20px;
-                }
-                th, td {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    text-align: left;
-                    font-size: 12px;
-                }
-                th {
-                    background-color: #f2f2f2;
-                }
-                .grand-total {
-                    font-weight: bold;
-                    font-size: 14px;
-                }
-                @page {
-                    size: A4;
-                    margin: 20mm;
-                }
+                body { font-family: Arial, sans-serif; padding: 40px; }
+                h1 { text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 12px; }
+                th { background-color: #f2f2f2; }
+                .grand-total { font-weight: bold; font-size: 14px; }
+                @page { size: A4; margin: 20mm; }
             </style>
         </head>
         <body>
@@ -231,7 +221,6 @@ async function printBookingReport() {
     filteredBookings.forEach(booking => {
         const bookingDate = new Date(booking.completedDate).toLocaleDateString();
         const totalAmount = Number(booking.totalAmount) || 0;
-
         grandTotal += totalAmount;
 
         printContent += `
