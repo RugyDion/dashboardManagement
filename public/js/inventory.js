@@ -41,14 +41,14 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadSalesEntries() {
         const res = await fetch(`${salesUrl}totalSales`);
         const data = await res.json();
-        const salesEntries = data.totalSales || [];
+        salesData = data.totalSales || []; // <- save here
         const tableBody = document.getElementById('salesEntriesTable');
         tableBody.innerHTML = '';
 
         let grandTotal = 0;
 
         // Show latest entries first
-        salesEntries.slice().reverse().forEach(entry => {
+        salesData.slice().reverse().forEach(entry => {
             grandTotal += entry.totalSales;
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -104,11 +104,11 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadStorageEntries() {
         const res = await fetch(`${salesUrl}dailyStorageEntry`);
         const data = await res.json();
-        const storageEntries = data.entries || [];
+        storageData = data.entries || [];
         const tableBody = document.getElementById('storageEntriesTable');
         tableBody.innerHTML = '';
 
-        storageEntries.slice().reverse().forEach(entry => {
+        storageData.slice().reverse().forEach(entry => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${entry.date}</td>
@@ -147,11 +147,11 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadUsageEntries() {
         const res = await fetch(`${salesUrl}storageUsageEntry`);
         const data = await res.json();
-        const usageEntries = data.entries || [];
+        usageData = data.entries || [];
         const tableBody = document.getElementById('usageEntriesTable');
         tableBody.innerHTML = '';
 
-        usageEntries.slice().reverse().forEach(entry => {
+        usageData.slice().reverse().forEach(entry => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${entry.date}</td>
@@ -168,6 +168,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
    // ----------------- PRINT MODAL -----------------
+let salesData = [];   // hold fetched sales entries
+let storageData = []; // hold fetched storage entries
+let usageData = [];   // hold fetched usage entries
+
 window.openPrintModal = function (section) {
     currentPrintSection = section;
     document.getElementById('printModal').style.display = 'block';
@@ -178,46 +182,43 @@ window.closePrintModal = function () {
 }
 
 window.printSection = function () {
-    const fromDate = document.getElementById('modalFromDate').value;
-    const toDate = document.getElementById('modalToDate').value;
-    let rows = [];
+    const fromDate = document.getElementById('modalFromDate').value ? new Date(document.getElementById('modalFromDate').value) : null;
+    const toDate = document.getElementById('modalToDate').value ? new Date(document.getElementById('modalToDate').value + "T23:59:59") : null;
+
+    let entriesToPrint = [];
+    let title = '';
 
     if (currentPrintSection === 'sales') {
-        const tableRows = Array.from(document.querySelectorAll("#salesEntriesTable tr"));
-        rows = tableRows.filter(row => {
-            const dateText = row.children[0].textContent;
-            const rowDate = new Date(dateText);
-            if (fromDate && rowDate < new Date(fromDate)) return false;
-            if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+        entriesToPrint = salesData.slice().filter(entry => {
+            const entryDate = new Date(entry.date);
+            if (fromDate && entryDate < fromDate) return false;
+            if (toDate && entryDate > toDate) return false;
             return true;
         });
-        printTable(rows, 'End of Day Sales Report');
+        title = 'End of Day Sales Report';
     } else if (currentPrintSection === 'storage') {
-        const tableRows = Array.from(document.querySelectorAll("#storageEntriesTable tr"));
-        rows = tableRows.filter(row => {
-            const dateText = row.children[0].textContent;
-            const rowDate = new Date(dateText);
-            if (fromDate && rowDate < new Date(fromDate)) return false;
-            if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+        entriesToPrint = storageData.slice().filter(entry => {
+            const entryDate = new Date(entry.date);
+            if (fromDate && entryDate < fromDate) return false;
+            if (toDate && entryDate > toDate) return false;
             return true;
         });
-        printTable(rows, 'Saved Stock Entries');
+        title = 'Saved Stock Entries';
     } else if (currentPrintSection === 'usage') {
-        const tableRows = Array.from(document.querySelectorAll("#usageEntriesTable tr"));
-        rows = tableRows.filter(row => {
-            const dateText = row.children[0].textContent;
-            const rowDate = new Date(dateText);
-            if (fromDate && rowDate < new Date(fromDate)) return false;
-            if (toDate && rowDate > new Date(toDate + "T23:59:59")) return false;
+        entriesToPrint = usageData.slice().filter(entry => {
+            const entryDate = new Date(entry.date);
+            if (fromDate && entryDate < fromDate) return false;
+            if (toDate && entryDate > toDate) return false;
             return true;
         });
-        printTable(rows, 'Saved Stock Usage Entries');
+        title = 'Saved Stock Usage Entries';
     }
 
+    printTable(entriesToPrint, title);
     closePrintModal();
 }
 
-function printTable(rows, title) {
+function printTable(entries, title) {
     const printWindow = window.open('', '', 'height=600,width=900');
     printWindow.document.write('<html><head><title>' + title + '</title>');
     printWindow.document.write('<style>table{width:100%;border-collapse:collapse;}table,th,td{border:1px solid #000;padding:8px;text-align:left;}h1{text-align:center;}</style>');
@@ -225,38 +226,62 @@ function printTable(rows, title) {
     printWindow.document.write('<h1>' + title + '</h1>');
     printWindow.document.write('<table>');
 
-    if (rows.length > 0) {
-        // Write table header
-        const ths = rows[0].parentElement.parentElement.querySelectorAll('thead th');
-        printWindow.document.write('<thead><tr>');
-        ths.forEach(th => printWindow.document.write('<th>' + th.textContent + '</th>'));
-        printWindow.document.write('</tr></thead>');
+    if (entries.length > 0) {
+        // Table header
+        if (currentPrintSection === 'sales') {
+            printWindow.document.write('<thead><tr><th>Date</th><th>Bookings</th><th>Food</th><th>Drinks</th><th>Events</th><th>Laundry</th><th>Pool</th><th>Total</th></tr></thead>');
+        } else if (currentPrintSection === 'storage') {
+            printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity</th></tr></thead>');
+        } else if (currentPrintSection === 'usage') {
+            printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity Taken Out</th></tr></thead>');
+        }
 
-        // Write filtered rows
+        // Table body
         printWindow.document.write('<tbody>');
-        let grandTotal = 0;
 
-        rows.forEach(row => {
-            // Clone the row so we can safely modify the content for printing
-            const cells = Array.from(row.children);
+        let grandTotal = 0;
+        entries.forEach(entry => {
             if (currentPrintSection === 'sales') {
-                // Format numeric cells with ₦ sign
-                for (let i = 1; i <= 7; i++) {
-                    const value = parseFloat(cells[i].textContent.replace(/₦|,/g, '')) || 0;
-                    cells[i].textContent = '₦' + value.toLocaleString();
-                }
-                // Add to grand total
-                const total = parseFloat(cells[7].textContent.replace(/₦|,/g, '')) || 0;
+                const bookings = entry.bookingsEndOfDaySales || 0;
+                const food = entry.foodEndOfDaySales || 0;
+                const drinks = entry.drinksEndOfDaySales || 0;
+                const events = entry.eventsEndOfDaySales || 0;
+                const laundry = entry.laundryEndOfDaySales || 0;
+                const pool = entry.poolEndOfDaySales || 0;
+                const total = entry.totalSales || 0;
                 grandTotal += total;
+
+                printWindow.document.write(`<tr>
+                    <td>${entry.date}</td>
+                    <td>₦${bookings.toLocaleString()}</td>
+                    <td>₦${food.toLocaleString()}</td>
+                    <td>₦${drinks.toLocaleString()}</td>
+                    <td>₦${events.toLocaleString()}</td>
+                    <td>₦${laundry.toLocaleString()}</td>
+                    <td>₦${pool.toLocaleString()}</td>
+                    <td>₦${total.toLocaleString()}</td>
+                </tr>`);
+            } else if (currentPrintSection === 'storage') {
+                printWindow.document.write(`<tr>
+                    <td>${entry.date}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.quantity}</td>
+                </tr>`);
+            } else if (currentPrintSection === 'usage') {
+                printWindow.document.write(`<tr>
+                    <td>${entry.date}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.takeOutQuantity}</td>
+                </tr>`);
             }
-            // Create row HTML
-            const rowHTML = cells.map(cell => `<td>${cell.textContent}</td>`).join('');
-            printWindow.document.write('<tr>' + rowHTML + '</tr>');
         });
 
-        // Add grand total row for sales
+        // Add grand total for sales
         if (currentPrintSection === 'sales') {
-            printWindow.document.write('<tr style="font-weight:bold;"><td colspan="7" style="text-align:right;">Grand Total:</td><td>₦' + grandTotal.toLocaleString() + '</td></tr>');
+            printWindow.document.write(`<tr style="font-weight:bold;">
+                <td colspan="7" style="text-align:right;">Grand Total:</td>
+                <td>₦${grandTotal.toLocaleString()}</td>
+            </tr>`);
         }
 
         printWindow.document.write('</tbody>');
