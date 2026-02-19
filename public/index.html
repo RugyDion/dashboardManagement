@@ -8,6 +8,12 @@
     <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+    .dormant {
+        display: none !important;
+    }
+</style>
+
     <title>Montevar Hotel Dashboard</title>
 </head>
 <body>
@@ -45,10 +51,10 @@
             <li><i class='bx bx-analyse'></i><a href="#" onclick="openModal('inventory.html')">Inventory</a></li>
             <li><i class='bx bx-detail'></i><a href="#" onclick="openModal('booking_report.html')">Bookings Report</a></li>
             <li><i class='bx bx-dish'></i><a href="#" onclick="openModal('food_report.html')">Food Report</a></li>
-            <li><i class='bx bx-drink'></i><a href="#" onclick="openModal('drinks_report.html')">Drinks Report</a></li>
-            <li><i class='bx bx-calendar-event'></i><a href="#" onclick="openModal('event_report.html')">Events Report</a></li>
+            <li class="dormant"><i class='bx bx-drink'></i><a href="#" onclick="openModal('drinks_report.html')">Drinks Report</a></li>
+            <li class="dormant"><i class='bx bx-calendar-event'></i><a href="#" onclick="openModal('event_report.html')">Events Report</a></li>
             <li><i class='bx bx-closet'></i><a href="#" onclick="openModal('laundry_report.html')">Laundry Report</a></li>
-            <li><i class='bx bx-swim'></i><a href="#" onclick="openModal('swimming_pool_report.html')">Pool Report</a></li>
+            <li class="dormant"><i class='bx bx-swim'></i><a href="#" onclick="openModal('swimming_pool_report.html')">Pool Report</a></li>
 
 
 
