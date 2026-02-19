@@ -294,3 +294,4 @@ function printTable(entries, title) {
     printWindow.document.close();
     printWindow.print();
 }
+});
