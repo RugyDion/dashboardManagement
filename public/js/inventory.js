@@ -309,7 +309,12 @@ window.printSection = function () {
         title = 'Saved Stock Usage Entries';
     }
 
-    entriesToPrint.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Force newest first no matter what backend sends
+    entriesToPrint = entriesToPrint
+    .slice()
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .reverse();
+
 
 
     printTable(entriesToPrint, title);
