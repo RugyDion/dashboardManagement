@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // ----------------- STORAGE SECTION -----------------
 document.getElementById('storageForm').addEventListener('submit', async function (event) {
     event.preventDefault();
+    storageData = [];
 
     const productName = document.getElementById('productNameStorage').value;
     const quantity = parseInt(document.getElementById('quantityStorage').value) || 0;
@@ -107,34 +108,47 @@ document.getElementById('storageForm').addEventListener('submit', async function
 
 // Load storage entries and calculate totalAfter
 async function loadStorageEntries() {
-    const res = await fetch(`${salesUrl}dailyStorageEntry`);
-    const data = await res.json();
-    const rawStorageData = data.entries || [];
+    const [storageRes, usageRes] = await Promise.all([
+        fetch(`${salesUrl}dailyStorageEntry`),
+        fetch(`${salesUrl}storageUsageEntry`)
+    ]);
+
+    const storageResponse = await storageRes.json();
+    const usageResponse = await usageRes.json();
+
+    const storageEntries = storageResponse.entries || [];
+    const usageEntries = usageResponse.entries || [];
 
     const tableBody = document.getElementById('storageEntriesTable');
     tableBody.innerHTML = '';
 
-    // Track cumulative stock per product
-    let stockTotals = {};
-    const sorted = [...rawStorageData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    storageData = []; // reset for printing
 
-    let calculatedEntries = [];
+    // Sort oldest first
+    const sortedStorage = [...storageEntries].sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+    );
 
-    sorted.forEach(entry => {
-        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
-        stockTotals[entry.productName] += entry.quantity;
+    // Calculate running totals
+    let runningTotals = {};
 
-        calculatedEntries.push({
+    sortedStorage.forEach(entry => {
+        if (!runningTotals[entry.productName]) {
+            runningTotals[entry.productName] = 0;
+        }
+
+        runningTotals[entry.productName] += Number(entry.quantity);
+
+        const calculatedEntry = {
             ...entry,
-            totalAfter: stockTotals[entry.productName]
-        });
+            totalAfter: runningTotals[entry.productName]
+        };
+
+        storageData.push(calculatedEntry);
     });
 
-    // Save to storageData for usage calculation
-    storageData = calculatedEntries;
-
     // Display newest first
-    calculatedEntries.slice().reverse().forEach(entry => {
+    storageData.slice().reverse().forEach(entry => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${entry.date}</td>
@@ -145,9 +159,9 @@ async function loadStorageEntries() {
         tableBody.appendChild(row);
     });
 
-    // Update usage entries to reflect new stock
     await loadUsageEntries();
 }
+
 
 // Clear storage entries
 document.getElementById('clearStorage').addEventListener('click', async function () {
@@ -159,7 +173,9 @@ document.getElementById('clearStorage').addEventListener('click', async function
 // ----------------- USAGE SECTION -----------------
 document.getElementById('usageForm').addEventListener('submit', async function(event) {
     event.preventDefault();
+    usageData = [];
 
+    
     const productName = document.getElementById('productNameUsage').value;
     const takeOutQuantity = parseInt(document.getElementById('quantityUsage').value) || 0;
     const dateTime = new Date().toLocaleString();
@@ -177,40 +193,54 @@ document.getElementById('usageForm').addEventListener('submit', async function(e
 });
 
 async function loadUsageEntries() {
-    const res = await fetch(`${salesUrl}storageUsageEntry`);
-    const data = await res.json();
-    const rawUsageData = data.entries || [];
+    const [storageRes, usageRes] = await Promise.all([
+        fetch(`${salesUrl}dailyStorageEntry`),
+        fetch(`${salesUrl}storageUsageEntry`)
+    ]);
+
+    const storageResponse = await storageRes.json();
+    const usageResponse = await usageRes.json();
+
+    const storageEntries = storageResponse.entries || [];
+    const usageEntries = usageResponse.entries || [];
 
     const tableBody = document.getElementById('usageEntriesTable');
     tableBody.innerHTML = '';
 
-    // Build stock totals from storageData first
+    usageData = []; // reset for printing
+
+    // Build total stock first
     let stockTotals = {};
-    storageData.forEach(entry => {
-        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
-        stockTotals[entry.productName] += entry.quantity;
+
+    storageEntries.forEach(entry => {
+        if (!stockTotals[entry.productName]) {
+            stockTotals[entry.productName] = 0;
+        }
+        stockTotals[entry.productName] += Number(entry.quantity);
     });
 
-    // Subtract all usage chronologically
-    const sortedUsage = [...rawUsageData].sort((a, b) => new Date(a.date) - new Date(b.date));
-    let calculatedUsage = [];
+    // Sort usage oldest first
+    const sortedUsage = [...usageEntries].sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+    );
 
     sortedUsage.forEach(entry => {
-        if (!stockTotals[entry.productName]) stockTotals[entry.productName] = 0;
+        if (!stockTotals[entry.productName]) {
+            stockTotals[entry.productName] = 0;
+        }
 
-        stockTotals[entry.productName] -= entry.takeOutQuantity;
+        stockTotals[entry.productName] -= Number(entry.takeOutQuantity);
 
-        calculatedUsage.push({
+        const calculatedEntry = {
             ...entry,
             remaining: stockTotals[entry.productName] >= 0 ? stockTotals[entry.productName] : 0
-        });
+        };
+
+        usageData.push(calculatedEntry);
     });
 
-    // Save back to usageData for printing
-    usageData = calculatedUsage;
-
     // Display newest first
-    calculatedUsage.slice().reverse().forEach(entry => {
+    usageData.slice().reverse().forEach(entry => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${entry.date}</td>
@@ -221,6 +251,7 @@ async function loadUsageEntries() {
         tableBody.appendChild(row);
     });
 }
+
 
 // Clear usage entries
 document.getElementById('clearUsage').addEventListener('click', async function () {
@@ -275,6 +306,9 @@ window.printSection = function () {
         });
         title = 'Saved Stock Usage Entries';
     }
+
+    entriesToPrint.sort((a, b) => new Date(b.date) - new Date(a.date));
+
 
     printTable(entriesToPrint, title);
     closePrintModal();
