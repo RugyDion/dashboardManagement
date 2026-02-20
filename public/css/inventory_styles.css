@@ -95,6 +95,23 @@ table td {
     background-color: #fafafa;
 }
 
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; /* prevents table from squeezing too small */
+}
+
+th, td {
+    white-space: nowrap; /* prevents text breaking badly */
+}
+
+
+
 /* Results Section */
 #salesResults, #storageResults, #usageResults {
     margin-top: 20px;
