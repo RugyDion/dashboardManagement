@@ -158,6 +158,7 @@ function closePrintModal() {
 
 // 🔥 Updated printBookingReport function to use modal dates
 async function printBookingReport() {
+
     const fromDate = document.getElementById("modalFromDate").value;
     const toDate = document.getElementById("modalToDate").value;
 
@@ -166,7 +167,7 @@ async function printBookingReport() {
         return;
     }
 
-    closePrintModal(); // Close the modal once dates are selected
+    closePrintModal();
 
     const res = await fetch("/api/v1/bookings");
     let bks = await res.json() || [];
@@ -186,44 +187,96 @@ async function printBookingReport() {
         return;
     }
 
-    // 🔥 Calculate Grand Total
     let grandTotal = 0;
 
-    let printContent = `
+    const printWindow = window.open("", "", "width=1000,height=800");
+
+    printWindow.document.write(`
         <html>
         <head>
             <title>Booking Report</title>
+
             <style>
-                body { font-family: Arial, sans-serif; padding: 40px; }
-                h1 { text-align: center; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 12px; }
-                th { background-color: #f2f2f2; }
-                .grand-total { font-weight: bold; font-size: 14px; }
-                @page { size: A4; margin: 20mm; }
+                @page {
+                    size: A4;
+                    margin: 25mm 15mm 20mm 15mm;
+                }
+
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding-top: 20px;
+                }
+
+                h1 {
+                    text-align: center;
+                    font-size: 22px;
+                    margin: 0 0 15px 0;
+                }
+
+                .date-range {
+                    text-align: center;
+                    margin-bottom: 20px;
+                    font-size: 14px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                thead {
+                    display: table-header-group;
+                }
+
+                th, td {
+                    border: 1px solid #000;
+                    padding: 6px;
+                    font-size: 13px;
+                    text-align: left;
+                }
+
+                th {
+                    background-color: #f2f2f2;
+                }
+
+                .grand-total {
+                    font-weight: bold;
+                }
             </style>
         </head>
+
         <body>
+
             <h1>Booking Report</h1>
-            <p><strong>From:</strong> ${fromDate} &nbsp;&nbsp; <strong>To:</strong> ${toDate}</p>
+
+            <div class="date-range">
+                <strong>From:</strong> ${fromDate}
+                &nbsp;&nbsp;
+                <strong>To:</strong> ${toDate}
+            </div>
+
             <table>
-                <tr>
-                    <th>Date</th>
-                    <th>Full Name</th>
-                    <th>Phone</th>
-                    <th>Room No</th>
-                    <th>Room Type</th>
-                    <th>Days</th>
-                    <th>Total (₦)</th>
-                </tr>
-    `;
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Full Name</th>
+                        <th>Phone</th>
+                        <th>Room No</th>
+                        <th>Room Type</th>
+                        <th>Days</th>
+                        <th>Total (₦)</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `);
 
     filteredBookings.forEach(booking => {
         const bookingDate = new Date(booking.completedDate).toLocaleDateString();
         const totalAmount = Number(booking.totalAmount) || 0;
         grandTotal += totalAmount;
 
-        printContent += `
+        printWindow.document.write(`
             <tr>
                 <td>${bookingDate}</td>
                 <td>${booking.fullName}</td>
@@ -233,22 +286,26 @@ async function printBookingReport() {
                 <td>${booking.numberOfDays}</td>
                 <td>₦${totalAmount.toLocaleString()}</td>
             </tr>
-        `;
+        `);
     });
 
-    // 🔥 Add Grand Total Row
-    printContent += `
-                <tr class="grand-total">
-                    <td colspan="6" style="text-align:right;">GRAND TOTAL</td>
-                    <td>₦${grandTotal.toLocaleString()}</td>
-                </tr>
+    printWindow.document.write(`
+            <tr class="grand-total">
+                <td colspan="6" style="text-align:right;">GRAND TOTAL</td>
+                <td>₦${grandTotal.toLocaleString()}</td>
+            </tr>
+                </tbody>
             </table>
+
         </body>
         </html>
-    `;
+    `);
 
-    const printWindow = window.open("", "", "width=900,height=700");
-    printWindow.document.write(printContent);
     printWindow.document.close();
-    printWindow.print();
+
+    printWindow.onload = function () {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    };
 }
