@@ -248,7 +248,7 @@ async function printBookingReport() {
 
         <body>
 
-            <h1>Booking Report</h1>
+            <h1>Montevar Hotel Booking Report</h1>
 
             <div class="date-range">
                 <strong>From:</strong> ${fromDate}
