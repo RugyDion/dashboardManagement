@@ -461,6 +461,94 @@ function printTable(entries, title) {
         return '';
     }
 
+function printTable(entries, title) {
+    const printWindow = window.open('', '', 'height=800,width=1000');
+
+    const html = `
+        <html>
+        <head>
+            <title>${title}</title>
+            <style>
+                @page { size: A4; margin: 20mm; }
+                body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                .print-container { width: 100%; }
+                h1 { text-align: center; margin-bottom: 10px; page-break-after: avoid; }
+                .print-date { text-align: right; margin-bottom: 15px; font-size: 14px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                tr { page-break-inside: avoid; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 14px; }
+                th { background: #f2f2f2; }
+                tfoot td { font-weight: bold; }
+                thead { display: table-header-group; } /* repeat table header on each page */
+            </style>
+        </head>
+        <body>
+            <div class="print-container">
+                <h1>${title}</h1>
+                <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
+                <table>
+                    ${generateTableHeader()}
+                    <tbody>
+                        ${generateTableRows(entries)}
+                    </tbody>
+                </table>
+            </div>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    // Wait until the print window fully loads
+    printWindow.onload = function() {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    };
+
+    // ----------------------------
+    // Helper functions
+    // ----------------------------
+    function generateTableHeader() {
+        if (currentPrintSection === 'sales') {
+            return `<thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Bookings</th>
+                            <th>Food</th>
+                            <th>Drinks</th>
+                            <th>Events</th>
+                            <th>Laundry</th>
+                            <th>Pool</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>`;
+        }
+        if (currentPrintSection === 'storage') {
+            return `<thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Total After</th>
+                        </tr>
+                    </thead>`;
+        }
+        if (currentPrintSection === 'usage') {
+            return `<thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product Name</th>
+                            <th>Quantity Taken Out</th>
+                            <th>Remaining</th>
+                        </tr>
+                    </thead>`;
+        }
+        return '';
+    }
+
     function generateTableRows(entries) {
         if (entries.length === 0) {
             return `<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>`;
@@ -478,47 +566,40 @@ function printTable(entries, title) {
                 const total = entry.totalSales || 0;
                 grandTotal += total;
 
-                return `
-                    <tr>
-                        <td>${entry.date}</td>
-                        <td>₦${bookings.toLocaleString()}</td>
-                        <td>₦${food.toLocaleString()}</td>
-                        <td>₦${drinks.toLocaleString()}</td>
-                        <td>₦${events.toLocaleString()}</td>
-                        <td>₦${laundry.toLocaleString()}</td>
-                        <td>₦${pool.toLocaleString()}</td>
-                        <td>₦${total.toLocaleString()}</td>
-                    </tr>
-                    ${entry === entries[entries.length - 1] ? `
+                return `<tr>
+                            <td>${entry.date}</td>
+                            <td>₦${bookings.toLocaleString()}</td>
+                            <td>₦${food.toLocaleString()}</td>
+                            <td>₦${drinks.toLocaleString()}</td>
+                            <td>₦${events.toLocaleString()}</td>
+                            <td>₦${laundry.toLocaleString()}</td>
+                            <td>₦${pool.toLocaleString()}</td>
+                            <td>₦${total.toLocaleString()}</td>
+                        </tr>
+                        ${entry === entries[entries.length - 1] ? `
                         <tr>
                             <td colspan="7" style="text-align:right;font-weight:bold;">Grand Total:</td>
                             <td>₦${grandTotal.toLocaleString()}</td>
-                        </tr>` : ''}
-                `;
+                        </tr>` : ''}`;
             }
 
             if (currentPrintSection === 'storage') {
-                return `
-                    <tr>
-                        <td>${entry.date}</td>
-                        <td>${entry.productName}</td>
-                        <td>${entry.quantity}</td>
-                        <td>${entry.totalAfter}</td>
-                    </tr>
-                `;
+                return `<tr>
+                            <td>${entry.date}</td>
+                            <td>${entry.productName}</td>
+                            <td>${entry.quantity}</td>
+                            <td>${entry.totalAfter}</td>
+                        </tr>`;
             }
 
             if (currentPrintSection === 'usage') {
-                return `
-                    <tr>
-                        <td>${entry.date}</td>
-                        <td>${entry.productName}</td>
-                        <td>${entry.takeOutQuantity}</td>
-                        <td>${entry.remaining}</td>
-                    </tr>
-                `;
+                return `<tr>
+                            <td>${entry.date}</td>
+                            <td>${entry.productName}</td>
+                            <td>${entry.takeOutQuantity}</td>
+                            <td>${entry.remaining}</td>
+                        </tr>`;
             }
-
             return '';
         }).join('');
     }
