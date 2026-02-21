@@ -194,7 +194,7 @@ async function printBookingReport() {
     printWindow.document.write(`
         <html>
         <head>
-            <title>Booking Report</title>
+            <title>Montevar Hotel Booking Report</title>
 
             <style>
                 @page {
