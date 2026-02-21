@@ -322,146 +322,6 @@ window.printSection = function () {
 }
 
 function printTable(entries, title) {
-
-    const printWindow = window.open('', '', 'height=800,width=1000');
-
-    // Build full HTML content
-    const html = `
-        <html>
-        <head>
-            <title>${title}</title>
-            <style>
-                @page {
-                    size: A4;
-                    margin: 20mm;
-                }
-
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                }
-
-                .print-container {
-                    width: 100%;
-                    page-break-after: auto;
-                }
-
-                h1 {
-                    text-align: center;
-                    margin-bottom: 10px;
-                    display: block;
-                    page-break-after: avoid;
-                }
-
-                .print-date {
-                    text-align: right;
-                    margin-bottom: 15px;
-                    font-size: 14px;
-                    display: block;
-                }
-
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 20px;
-                    page-break-inside: auto;
-                }
-
-                tr {
-                    page-break-inside: avoid;
-                    page-break-after: auto;
-                }
-
-                th, td {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    text-align: left;
-                    font-size: 14px;
-                }
-
-                th {
-                    background: #f2f2f2;
-                }
-
-                tfoot td {
-                    font-weight: bold;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="print-container">
-                <h1>${title}</h1>
-                <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
-                <table>
-                    ${generateTableHeader()}
-                    <tbody>
-                        ${generateTableRows(entries)}
-                    </tbody>
-                </table>
-            </div>
-        </body>
-        </html>
-    `;
-
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-
-    // Wait to ensure DOM fully renders before printing
-    setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-    }, 500);
-
-    // ----------------------------
-    // Helper functions
-    // ----------------------------
-    function generateTableHeader() {
-        if (currentPrintSection === 'sales') {
-            return `
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Bookings</th>
-                        <th>Food</th>
-                        <th>Drinks</th>
-                        <th>Events</th>
-                        <th>Laundry</th>
-                        <th>Pool</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-            `;
-        }
-        if (currentPrintSection === 'storage') {
-            return `
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Product Name</th>
-                        <th>Quantity</th>
-                        <th>Total After</th>
-                    </tr>
-                </thead>
-            `;
-        }
-        if (currentPrintSection === 'usage') {
-            return `
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Product Name</th>
-                        <th>Quantity Taken Out</th>
-                        <th>Remaining</th>
-                    </tr>
-                </thead>
-            `;
-        }
-        return '';
-    }
-
-function printTable(entries, title) {
     const printWindow = window.open('', '', 'height=800,width=1000');
 
     const html = `
@@ -479,7 +339,7 @@ function printTable(entries, title) {
                 th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 14px; }
                 th { background: #f2f2f2; }
                 tfoot td { font-weight: bold; }
-                thead { display: table-header-group; } /* repeat table header on each page */
+                thead { display: table-header-group; }
             </style>
         </head>
         <body>
@@ -501,16 +361,12 @@ function printTable(entries, title) {
     printWindow.document.write(html);
     printWindow.document.close();
 
-    // Wait until the print window fully loads
     printWindow.onload = function() {
         printWindow.focus();
         printWindow.print();
         printWindow.close();
     };
 
-    // ----------------------------
-    // Helper functions
-    // ----------------------------
     function generateTableHeader() {
         if (currentPrintSection === 'sales') {
             return `<thead>
@@ -550,12 +406,13 @@ function printTable(entries, title) {
     }
 
     function generateTableRows(entries) {
-        if (entries.length === 0) {
+        if (!entries || entries.length === 0) {
             return `<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>`;
         }
 
         let grandTotal = 0;
-        return entries.map(entry => {
+
+        return entries.map((entry, idx) => {
             if (currentPrintSection === 'sales') {
                 const bookings = entry.bookingsEndOfDaySales || 0;
                 const food = entry.foodEndOfDaySales || 0;
@@ -576,8 +433,7 @@ function printTable(entries, title) {
                             <td>₦${pool.toLocaleString()}</td>
                             <td>₦${total.toLocaleString()}</td>
                         </tr>
-                        ${entry === entries[entries.length - 1] ? `
-                        <tr>
+                        ${idx === entries.length - 1 ? `<tr>
                             <td colspan="7" style="text-align:right;font-weight:bold;">Grand Total:</td>
                             <td>₦${grandTotal.toLocaleString()}</td>
                         </tr>` : ''}`;
