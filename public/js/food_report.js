@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         <body>
 
-            <h1>Food Report - Montevar Hotel</h1>
+            <h1>Montevar Hotel Food & Drinks Report</h1>
 
             <div class="date-range">
                 <strong>From:</strong> ${fromDate}
