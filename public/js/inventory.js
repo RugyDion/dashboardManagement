@@ -322,98 +322,155 @@ window.printSection = function () {
 }
 
 function printTable(entries, title) {
-    const printWindow = window.open('', '', 'height=800,width=1000');
 
-    const html = `
+    const printWindow = window.open('', '', 'width=1000,height=800');
+
+    printWindow.document.write(`
         <html>
         <head>
             <title>${title}</title>
+
             <style>
-                @page { size: A4; margin: 20mm; }
-                body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-                .print-container { width: 100%; }
-                h1 { text-align: center; margin-bottom: 10px; page-break-after: avoid; }
-                .print-date { text-align: right; margin-bottom: 15px; font-size: 14px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                tr { page-break-inside: avoid; }
-                th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 14px; }
-                th { background: #f2f2f2; }
-                tfoot td { font-weight: bold; }
-                thead { display: table-header-group; }
+                @page {
+                    size: A4;
+                    margin: 25mm 15mm 20mm 15mm;
+                }
+
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding-top: 20px;   /* THIS FIXES THE HEADING ISSUE */
+                }
+
+                h1 {
+                    text-align: center;
+                    font-size: 22px;
+                    margin: 0 0 15px 0;
+                    display: block;
+                }
+
+                .print-date {
+                    text-align: right;
+                    margin-bottom: 20px;
+                    font-size: 13px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                thead {
+                    display: table-header-group;
+                }
+
+                th, td {
+                    border: 1px solid #000;
+                    padding: 6px;
+                    font-size: 13px;
+                    text-align: left;
+                }
+
+                th {
+                    background-color: #f2f2f2;
+                }
             </style>
         </head>
+
         <body>
-            <div class="print-container">
-                <h1>${title}</h1>
-                <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
-                <table>
-                    ${generateTableHeader()}
-                    <tbody>
-                        ${generateTableRows(entries)}
-                    </tbody>
-                </table>
+
+            <h1>${title}</h1>
+
+            <div class="print-date">
+                Printed on: ${new Date().toLocaleString()}
             </div>
+
+            <table>
+                ${generateTableHeader()}
+                <tbody>
+                    ${generateTableRows(entries)}
+                </tbody>
+            </table>
+
         </body>
         </html>
-    `;
+    `);
 
-    printWindow.document.open();
-    printWindow.document.write(html);
     printWindow.document.close();
 
-    printWindow.onload = function() {
+    printWindow.onload = function () {
         printWindow.focus();
         printWindow.print();
         printWindow.close();
     };
 
+
     function generateTableHeader() {
         if (currentPrintSection === 'sales') {
-            return `<thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Bookings</th>
-                            <th>Food</th>
-                            <th>Drinks</th>
-                            <th>Events</th>
-                            <th>Laundry</th>
-                            <th>Pool</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>`;
+            return `
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Bookings</th>
+                        <th>Food</th>
+                        <th>Drinks</th>
+                        <th>Events</th>
+                        <th>Laundry</th>
+                        <th>Pool</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+            `;
         }
+
         if (currentPrintSection === 'storage') {
-            return `<thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Product Name</th>
-                            <th>Quantity</th>
-                            <th>Total After</th>
-                        </tr>
-                    </thead>`;
+            return `
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Total After</th>
+                    </tr>
+                </thead>
+            `;
         }
+
         if (currentPrintSection === 'usage') {
-            return `<thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Product Name</th>
-                            <th>Quantity Taken Out</th>
-                            <th>Remaining</th>
-                        </tr>
-                    </thead>`;
+            return `
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product Name</th>
+                        <th>Quantity Taken Out</th>
+                        <th>Remaining</th>
+                    </tr>
+                </thead>
+            `;
         }
+
         return '';
     }
 
+
     function generateTableRows(entries) {
+
         if (!entries || entries.length === 0) {
-            return `<tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr>`;
+            return `
+                <tr>
+                    <td colspan="100%" style="text-align:center;">
+                        No entries for selected date range
+                    </td>
+                </tr>
+            `;
         }
 
         let grandTotal = 0;
 
-        return entries.map((entry, idx) => {
+        return entries.map((entry, index) => {
+
             if (currentPrintSection === 'sales') {
+
                 const bookings = entry.bookingsEndOfDaySales || 0;
                 const food = entry.foodEndOfDaySales || 0;
                 const drinks = entry.drinksEndOfDaySales || 0;
@@ -421,41 +478,54 @@ function printTable(entries, title) {
                 const laundry = entry.laundryEndOfDaySales || 0;
                 const pool = entry.poolEndOfDaySales || 0;
                 const total = entry.totalSales || 0;
+
                 grandTotal += total;
 
-                return `<tr>
-                            <td>${entry.date}</td>
-                            <td>₦${bookings.toLocaleString()}</td>
-                            <td>₦${food.toLocaleString()}</td>
-                            <td>₦${drinks.toLocaleString()}</td>
-                            <td>₦${events.toLocaleString()}</td>
-                            <td>₦${laundry.toLocaleString()}</td>
-                            <td>₦${pool.toLocaleString()}</td>
-                            <td>₦${total.toLocaleString()}</td>
-                        </tr>
-                        ${idx === entries.length - 1 ? `<tr>
-                            <td colspan="7" style="text-align:right;font-weight:bold;">Grand Total:</td>
+                return `
+                    <tr>
+                        <td>${entry.date}</td>
+                        <td>₦${bookings.toLocaleString()}</td>
+                        <td>₦${food.toLocaleString()}</td>
+                        <td>₦${drinks.toLocaleString()}</td>
+                        <td>₦${events.toLocaleString()}</td>
+                        <td>₦${laundry.toLocaleString()}</td>
+                        <td>₦${pool.toLocaleString()}</td>
+                        <td>₦${total.toLocaleString()}</td>
+                    </tr>
+
+                    ${index === entries.length - 1 ? `
+                        <tr>
+                            <td colspan="7" style="text-align:right;font-weight:bold;">
+                                Grand Total:
+                            </td>
                             <td>₦${grandTotal.toLocaleString()}</td>
-                        </tr>` : ''}`;
+                        </tr>
+                    ` : ''}
+                `;
             }
 
             if (currentPrintSection === 'storage') {
-                return `<tr>
-                            <td>${entry.date}</td>
-                            <td>${entry.productName}</td>
-                            <td>${entry.quantity}</td>
-                            <td>${entry.totalAfter}</td>
-                        </tr>`;
+                return `
+                    <tr>
+                        <td>${entry.date}</td>
+                        <td>${entry.productName}</td>
+                        <td>${entry.quantity}</td>
+                        <td>${entry.totalAfter}</td>
+                    </tr>
+                `;
             }
 
             if (currentPrintSection === 'usage') {
-                return `<tr>
-                            <td>${entry.date}</td>
-                            <td>${entry.productName}</td>
-                            <td>${entry.takeOutQuantity}</td>
-                            <td>${entry.remaining}</td>
-                        </tr>`;
+                return `
+                    <tr>
+                        <td>${entry.date}</td>
+                        <td>${entry.productName}</td>
+                        <td>${entry.takeOutQuantity}</td>
+                        <td>${entry.remaining}</td>
+                    </tr>
+                `;
             }
+
             return '';
         }).join('');
     }
