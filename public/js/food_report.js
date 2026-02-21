@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
     printWindow.document.write(`
         <html>
         <head>
-            <title>Food Report</title>
+            <title> Montevar Hotel Food & Drinks Report</title>
 
             <style>
                 @page {
