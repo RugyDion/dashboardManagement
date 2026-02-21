@@ -322,31 +322,122 @@ window.printSection = function () {
 }
 
 function printTable(entries, title) {
-    const printWindow = window.open('', '', 'height=600,width=900');
-    printWindow.document.write('<html><head><title>' + title + '</title>');
-    printWindow.document.write('<style>table{width:100%;border-collapse:collapse;}table,th,td{border:1px solid #000;padding:8px;text-align:left;}h1{text-align:center;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write('<h1>' + title + '</h1>');
-    printWindow.document.write('<table>');
+
+    const printWindow = window.open('', '', 'height=800,width=1000');
+
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>${title}</title>
+            <style>
+                @page {
+                    size: A4;
+                    margin: 20mm;
+                }
+
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                .print-container {
+                    width: 100%;
+                }
+
+                h1 {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+
+                .print-date {
+                    text-align: right;
+                    margin-bottom: 15px;
+                    font-size: 14px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                th, td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: left;
+                    font-size: 14px;
+                }
+
+                th {
+                    background: #f2f2f2;
+                }
+
+                tfoot td {
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-container">
+                <h1>${title}</h1>
+                <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
+                <table>
+    `);
 
     if (entries.length > 0) {
-        // Table header
+
+        // TABLE HEADERS
         if (currentPrintSection === 'sales') {
-            printWindow.document.write('<thead><tr><th>Date</th><th>Bookings</th><th>Food</th><th>Drinks</th><th>Events</th><th>Laundry</th><th>Pool</th><th>Total</th></tr></thead>');
-        } else if (currentPrintSection === 'storage') {
-        printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity</th><th>Total After</th></tr></thead>');
-        }else if (currentPrintSection === 'usage') {
-            printWindow.document.write('<thead><tr><th>Date</th><th>Product Name</th><th>Quantity Taken Out</th><th>Remaining</th></tr></thead>');
+            printWindow.document.write(`
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Bookings</th>
+                        <th>Food</th>
+                        <th>Drinks</th>
+                        <th>Events</th>
+                        <th>Laundry</th>
+                        <th>Pool</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+            `);
         }
 
+        if (currentPrintSection === 'storage') {
+            printWindow.document.write(`
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Total After</th>
+                    </tr>
+                </thead>
+            `);
+        }
 
+        if (currentPrintSection === 'usage') {
+            printWindow.document.write(`
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product Name</th>
+                        <th>Quantity Taken Out</th>
+                        <th>Remaining</th>
+                    </tr>
+                </thead>
+            `);
+        }
 
-        // Table body
         printWindow.document.write('<tbody>');
 
         let grandTotal = 0;
+
         entries.forEach(entry => {
+
             if (currentPrintSection === 'sales') {
+
                 const bookings = entry.bookingsEndOfDaySales || 0;
                 const food = entry.foodEndOfDaySales || 0;
                 const drinks = entry.drinksEndOfDaySales || 0;
@@ -354,57 +445,85 @@ function printTable(entries, title) {
                 const laundry = entry.laundryEndOfDaySales || 0;
                 const pool = entry.poolEndOfDaySales || 0;
                 const total = entry.totalSales || 0;
+
                 grandTotal += total;
 
-                printWindow.document.write(`<tr>
-                    <td>${entry.date}</td>
-                    <td>₦${bookings.toLocaleString()}</td>
-                    <td>₦${food.toLocaleString()}</td>
-                    <td>₦${drinks.toLocaleString()}</td>
-                    <td>₦${events.toLocaleString()}</td>
-                    <td>₦${laundry.toLocaleString()}</td>
-                    <td>₦${pool.toLocaleString()}</td>
-                    <td>₦${total.toLocaleString()}</td>
-                </tr>`);
-            } else if (currentPrintSection === 'storage') {
-                    printWindow.document.write(`<tr>
+                printWindow.document.write(`
+                    <tr>
+                        <td>${entry.date}</td>
+                        <td>₦${bookings.toLocaleString()}</td>
+                        <td>₦${food.toLocaleString()}</td>
+                        <td>₦${drinks.toLocaleString()}</td>
+                        <td>₦${events.toLocaleString()}</td>
+                        <td>₦${laundry.toLocaleString()}</td>
+                        <td>₦${pool.toLocaleString()}</td>
+                        <td>₦${total.toLocaleString()}</td>
+                    </tr>
+                `);
+            }
+
+            if (currentPrintSection === 'storage') {
+                printWindow.document.write(`
+                    <tr>
                         <td>${entry.date}</td>
                         <td>${entry.productName}</td>
                         <td>${entry.quantity}</td>
                         <td>${entry.totalAfter}</td>
-                    </tr>`);
+                    </tr>
+                `);
+            }
 
-            } else if (currentPrintSection === 'usage') {
-                printWindow.document.write(`<tr>
-                    <td>${entry.date}</td>
-                    <td>${entry.productName}</td>
-                    <td>${entry.takeOutQuantity}</td>
-                    <td>${entry.remaining}</td>
-                </tr>`);
-                }
-
+            if (currentPrintSection === 'usage') {
+                printWindow.document.write(`
+                    <tr>
+                        <td>${entry.date}</td>
+                        <td>${entry.productName}</td>
+                        <td>${entry.takeOutQuantity}</td>
+                        <td>${entry.remaining}</td>
+                    </tr>
+                `);
+            }
         });
 
-        // Add grand total for sales
         if (currentPrintSection === 'sales') {
-            printWindow.document.write(`<tr style="font-weight:bold;">
-                <td colspan="7" style="text-align:right;">Grand Total:</td>
-                <td>₦${grandTotal.toLocaleString()}</td>
-            </tr>`);
+            printWindow.document.write(`
+                <tfoot>
+                    <tr>
+                        <td colspan="7" style="text-align:right;">Grand Total:</td>
+                        <td>₦${grandTotal.toLocaleString()}</td>
+                    </tr>
+                </tfoot>
+            `);
         }
 
         printWindow.document.write('</tbody>');
-        } else {
-        printWindow.document.write('<tbody><tr><td colspan="100%" style="text-align:center;">No entries for selected date range</td></tr></tbody>');
-        }
+    } else {
+        printWindow.document.write(`
+            <tbody>
+                <tr>
+                    <td colspan="100%" style="text-align:center;">
+                        No entries for selected date range
+                    </td>
+                </tr>
+            </tbody>
+        `);
+    }
 
+    printWindow.document.write(`
+                </table>
+            </div>
+        </body>
+        </html>
+    `);
 
-    printWindow.document.write('</table>');
-    printWindow.document.write('</body></html>');
     printWindow.document.close();
-    printWindow.print();
-}
 
+    // Wait a little before printing to ensure content loads
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
      // Load existing data immediately when page opens
         loadSalesEntries();
         loadStorageEntries();
