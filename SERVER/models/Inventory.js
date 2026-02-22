@@ -75,8 +75,83 @@ const StorageUsageSchema = new mongoose.Schema({
 }
 });
 
+
+const DebtSchema = new mongoose.Schema({
+  customerName: {
+    type: String,
+    required: [true, "Customer name is required"],
+  },
+  description: {
+    type: String,
+    required: [true, "Debt description is required"],
+  },
+  totalAmount: {
+    type: Number,
+    required: [true, "Total amount is required"],
+    min: [0, "Cannot be negative"],
+  },
+  amountPaid: {
+    type: Number,
+    default: 0,
+    min: [0, "Cannot be negative"],
+  },
+  remainingAmount: {
+    type: Number,
+    required: true,
+    min: [0, "Cannot be negative"],
+  },
+  status: {
+    type: String,
+    enum: ["Unpaid", "Partially Paid", "Paid"],
+    default: "Unpaid",
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+
+
+const PayrollSchema = new mongoose.Schema({
+  staffName: {
+    type: String,
+    required: [true, "Staff name is required"],
+  },
+  role: {
+    type: String,
+    required: [true, "Role is required"],
+  },
+  salaryAmount: {
+    type: Number,
+    required: [true, "Salary amount is required"],
+    min: [0, "Cannot be negative"],
+  },
+  paymentStatus: {
+    type: String,
+    enum: ["Pending", "Paid"],
+    default: "Pending",
+  },
+  paymentDate: {
+    type: Date,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+
 const SalesReport = mongoose.model("SalesReport", SalesReportSchema);
 const DailyStorage = mongoose.model("DailyStorage", DailyStorageSchema);
 const StorageUsage = mongoose.model("StorageUsage", StorageUsageSchema);
+const Debt = mongoose.model("Debt", DebtSchema);
+const Payroll = mongoose.model("Payroll", PayrollSchema);
 
-module.exports = { SalesReport, DailyStorage, StorageUsage };
+module.exports = { 
+  SalesReport, 
+  DailyStorage, 
+  StorageUsage,
+  Debt,
+  Payroll
+};
