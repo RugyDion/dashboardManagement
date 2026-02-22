@@ -152,7 +152,7 @@ async function loadStorageEntries() {
     storageData.slice().reverse().forEach(entry => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${entry.date}</td>
+            <td>${new Date(entry.date).toLocaleString()}</td>
             <td>${entry.productName}</td>
             <td>${entry.quantity}</td>
             <td>${entry.totalAfter}</td>
@@ -245,7 +245,7 @@ async function loadUsageEntries() {
     usageData.slice().reverse().forEach(entry => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${entry.date}</td>
+            <td>${new Date(entry.date).toLocaleString()}</td>
             <td>${entry.productName}</td>
             <td>${entry.takeOutQuantity}</td>
             <td>${entry.remaining}</td>
@@ -483,7 +483,7 @@ function printTable(entries, title) {
 
                 return `
                     <tr>
-                        <td>${entry.date}</td>
+                        <td>${new Date(entry.date).toLocaleString()}</td>
                         <td>₦${bookings.toLocaleString()}</td>
                         <td>₦${food.toLocaleString()}</td>
                         <td>₦${drinks.toLocaleString()}</td>
@@ -507,7 +507,7 @@ function printTable(entries, title) {
             if (currentPrintSection === 'storage') {
                 return `
                     <tr>
-                        <td>${entry.date}</td>
+                        <td>${new Date(entry.date).toLocaleString()}</td>
                         <td>${entry.productName}</td>
                         <td>${entry.quantity}</td>
                         <td>${entry.totalAfter}</td>
@@ -518,7 +518,7 @@ function printTable(entries, title) {
             if (currentPrintSection === 'usage') {
                 return `
                     <tr>
-                        <td>${entry.date}</td>
+                        <td>${new Date(entry.date).toLocaleString()}</td>
                         <td>${entry.productName}</td>
                         <td>${entry.takeOutQuantity}</td>
                         <td>${entry.remaining}</td>
