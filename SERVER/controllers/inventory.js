@@ -18,14 +18,14 @@ const addTotalSales = async (req, res) => {
       "poolEndOfDaySales",
     ]; 
 
-    const {bookingsEndOfDaySales, foodEndOfDaySales, drinksEndOfDaySales, eventsEndOfDaySales, laundryEndOfDaySales, poolEndOfDaySales, totalSales, date} = req.body
+    const {bookingsEndOfDaySales, foodEndOfDaySales, drinksEndOfDaySales, eventsEndOfDaySales, laundryEndOfDaySales, poolEndOfDaySales, totalSales} = req.body
     if (typeof bookingsEndOfDaySales == "undefined" || typeof foodEndOfDaySales == "undefined"|| typeof drinksEndOfDaySales == "undefined" || typeof eventsEndOfDaySales == "undefined" || typeof laundryEndOfDaySales == "undefined" || typeof poolEndOfDaySales == "undefined" || typeof totalSales == "undefined") {
       return res
         .status(400)
         .json({ message: "Please fill all necessary fields" });
     }
     
-    const salesReport = new SalesReport({ bookingsEndOfDaySales, foodEndOfDaySales, drinksEndOfDaySales, eventsEndOfDaySales, laundryEndOfDaySales, poolEndOfDaySales, totalSales, date });
+    const salesReport = new SalesReport({ bookingsEndOfDaySales, foodEndOfDaySales, drinksEndOfDaySales, eventsEndOfDaySales, laundryEndOfDaySales, poolEndOfDaySales, totalSales, date: new Date() });
     await salesReport.save()
     res
       .status(201)
