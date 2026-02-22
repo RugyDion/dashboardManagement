@@ -187,22 +187,11 @@
             <button id="clearUsage" class="clear-btn">Clear All Usage</button>
             <button id="printUsage" class="print-btn" onclick="openPrintModal('usage')">Print Usage</button>
         </section>
-    </div>
 
-    <!-- Reusable Print Modal -->
-    <div id="printModal" class="modal">
-        <div class="modal-content">
-            <h3>Select Date Range</h3>
-            <label>From:</label>
-            <input type="date" id="modalFromDate"><br>
-            <label>To:</label>
-            <input type="date" id="modalToDate"><br>
-            <button onclick="printSection()">Print</button>
-            <button onclick="closePrintModal()">Cancel</button>
-        </div>
-    </div>
 
-    <section id="debtSection">
+
+
+        <section id="debtSection">
     <h2>Debt Entry</h2>
 
     <form id="debtForm">
@@ -283,6 +272,25 @@
         </table>
     </div>
 </section>
+
+
+        
+        
+    </div>
+
+    <!-- Reusable Print Modal -->
+    <div id="printModal" class="modal">
+        <div class="modal-content">
+            <h3>Select Date Range</h3>
+            <label>From:</label>
+            <input type="date" id="modalFromDate"><br>
+            <label>To:</label>
+            <input type="date" id="modalToDate"><br>
+            <button onclick="printSection()">Print</button>
+            <button onclick="closePrintModal()">Cancel</button>
+        </div>
+    </div>
+
 
     <script src="js/inventory.js"></script>
 </body>
