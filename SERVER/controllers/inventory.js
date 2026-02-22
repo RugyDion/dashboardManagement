@@ -44,6 +44,24 @@ const seeTotalSales = async (req, res) => {
   }
 };
 
+const seeDailyStorageEntries = async (req, res) => {
+  try {
+    const entries = await DailyStorage.find({});
+    res.status(200).json({ entries });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch", error: err.message });
+  }
+};
+
+const deleteAllDailyStorageEntries = async (req, res) => {
+  try {
+    await DailyStorage.deleteMany({});
+    res.status(200).json({ message: "Deleted all daily storage entries successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete all entries" });
+  }
+};
+
 const addDailyStorageEntry = async (req, res) => {
   try {
     const { productName, quantity, amountPerUnit, totalAmount } = req.body;
