@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const poolSales = parseFloat(document.getElementById('poolSales').value) || 0;
 
         const totalSales = bookingsSales + foodSales + drinksSales + eventsSales + laundrySales + poolSales;
-        const dateTime = new Date().toISOString();
+        const dateTime = new Date().toLocaleString();
 
 
         const salesEntry = {
@@ -91,7 +91,7 @@ document.getElementById('storageForm').addEventListener('submit', async function
 
     const productName = document.getElementById('productNameStorage').value;
     const quantity = parseInt(document.getElementById('quantityStorage').value) || 0;
-    const dateTime = new Date().toISOString();
+    const dateTime = new Date().toLocaleString();
 
     const storageEntry = { productName, quantity, date: dateTime };
 
@@ -179,7 +179,7 @@ document.getElementById('usageForm').addEventListener('submit', async function(e
     
     const productName = document.getElementById('productNameUsage').value;
     const takeOutQuantity = parseInt(document.getElementById('quantityUsage').value) || 0;
-    const dateTime = new Date().toISOString();
+    const dateTime = new Date().toLocaleString();
 
 
     const usageEntry = { productName, takeOutQuantity, date: dateTime };
