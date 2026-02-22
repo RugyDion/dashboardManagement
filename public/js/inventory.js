@@ -305,7 +305,7 @@ window.printSection = function () {
             if (toDate && entryDate > toDate) return false;
             return true;
         });
-        title = 'Saved Stock Use/Sold Entries';
+        title = 'Saved Stock Used/Sold Entries';
     }
 
     // Force newest first no matter what backend sends
