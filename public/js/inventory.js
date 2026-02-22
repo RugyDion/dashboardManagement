@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
             laundryEndOfDaySales: laundrySales,
             poolEndOfDaySales: poolSales,
             totalSales,
-            date: new Date(nigeriaDate)
+             date: new Date()
         };
 
         await fetch(`${salesUrl}totalSales`, {
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
             grandTotal += entry.totalSales;
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${entry.date}</td>
+                <td>${new Date(entry.date).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
                 <td>₦${entry.bookingsEndOfDaySales.toLocaleString()}</td>
                 <td>₦${entry.foodEndOfDaySales.toLocaleString()}</td>
                 <td>₦${entry.drinksEndOfDaySales.toLocaleString()}</td>
