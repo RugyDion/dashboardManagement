@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const poolSales = parseFloat(document.getElementById('poolSales').value) || 0;
 
         const totalSales = bookingsSales + foodSales + drinksSales + eventsSales + laundrySales + poolSales;
-        const dateTime = new Date().toLocaleString();
+        const dateTime = new Date().toISOString();
 
 
         const salesEntry = {
