@@ -9,6 +9,15 @@ const {
   seeStorageUsageEntries,
   seeTotalSales,
   deleteTotalSales,
+
+  addDebt,
+  seeDebts,
+  updateDebtPayment,
+  deleteDebt,
+
+  addPayroll,
+  seePayroll,
+  deletePayroll,
 } = require("../controllers/inventory");
 
 // Route for the total sales
@@ -31,5 +40,30 @@ router
   .post(addStorageUsageEntry)
   .delete(deleteAllStorageUsageEntries)
   .get(seeStorageUsageEntries);
+
+// =======================
+// DEBT ROUTES
+// =======================
+
+router.route("/debt")
+  .post(addDebt)
+  .get(seeDebts);
+
+router.route("/debt/:id/payment")
+  .put(updateDebtPayment);
+
+router.route("/debt/:id")
+  .delete(deleteDebt);
+
+// =======================
+// PAYROLL ROUTES
+// =======================
+
+router.route("/payroll")
+  .post(addPayroll)
+  .get(seePayroll);
+
+router.route("/payroll/:id")
+  .delete(deletePayroll);
 
 module.exports = router;
