@@ -15,8 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const poolSales = parseFloat(document.getElementById('poolSales').value) || 0;
 
         const totalSales = bookingsSales + foodSales + drinksSales + eventsSales + laundrySales + poolSales;
-        const dateTime = new Date().toISOString();
-
+        const nigeriaDate = new Date().toLocaleString("en-NG", { timeZone: "Africa/Lagos" });
 
         const salesEntry = {
             bookingsEndOfDaySales: bookingsSales,
@@ -26,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
             laundryEndOfDaySales: laundrySales,
             poolEndOfDaySales: poolSales,
             totalSales,
-            date: dateTime
+            date: new Date(nigeriaDate)
         };
 
         await fetch(`${salesUrl}totalSales`, {
