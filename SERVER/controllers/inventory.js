@@ -46,29 +46,17 @@ const seeTotalSales = async (req, res) => {
 
 const addDailyStorageEntry = async (req, res) => {
   try {
-    const { productName, quantity } = req.body;
-    if (!productName || !quantity) {
+    const { productName, quantity, amountPerUnit, totalAmount } = req.body;
+
+    if (
+      !productName ||
+      quantity == null ||
+      amountPerUnit == null ||
+      totalAmount == null
+    ) {
       return res
         .status(400)
         .json({ message: "Please fill all necessary fields" });
-    }
-
-    const entry = new DailyStorage({ productName, quantity });
-    await entry.save()
-    res
-      .status(201)
-      .json({ message: "Added daily storage entry successfully", entry });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to add", error: err.message });
-  }
-};
-
-const addDailyStorageEntry = async (req, res) => {
-  try {
-    const { productName, quantity, amountPerUnit, totalAmount } = req.body;
-
-    if (!productName || quantity == undefined || amountPerUnit == undefined || totalAmount == undefined) {
-      return res.status(400).json({ message: "Please fill all necessary fields" });
     }
 
     const entry = new DailyStorage({
@@ -76,12 +64,15 @@ const addDailyStorageEntry = async (req, res) => {
       quantity,
       amountPerUnit,
       totalAmount,
-      date: new Date()
     });
 
     await entry.save();
-    res.status(201).json({ message: "Added daily storage entry successfully", entry });
+
+    res
+      .status(201)
+      .json({ message: "Added daily storage entry successfully", entry });
   } catch (err) {
+    console.error(err); // <- log for debugging
     res.status(500).json({ message: "Failed to add", error: err.message });
   }
 };
