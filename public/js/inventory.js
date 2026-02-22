@@ -337,6 +337,32 @@ const monthYear = now.toLocaleString("en-NG", {
 document.getElementById("payrollTitle").innerText = 
     `SALARY SCHEDULE FOR ${monthYear.toUpperCase()}`;
 
+    function attachCalculationListeners(row) {
+    const gross = row.querySelector(".grossSalary");
+    const bonus = row.querySelector(".bonus");
+    const tips = row.querySelector(".tips");
+    const debt = row.querySelector(".debt");
+    const shortage = row.querySelector(".shortage");
+    const payable = row.querySelector(".payable");
+
+    function calculatePayable() {
+        const total = 
+            (parseFloat(gross.value) || 0) +
+            (parseFloat(bonus.value) || 0) +
+            (parseFloat(tips.value) || 0) -
+            (parseFloat(debt.value) || 0) -
+            (parseFloat(shortage.value) || 0);
+
+        payable.value = total >= 0 ? total : 0;
+    }
+
+    [gross, bonus, tips, debt, shortage].forEach(input => {
+        input.addEventListener("input", calculatePayable);
+    });
+
+    calculatePayable(); // initial calculation
+}
+
     function addStaffRow() {
     const tbody = document.getElementById("payrollTableBody");
 
