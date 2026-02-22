@@ -53,10 +53,20 @@ const DailyStorageSchema = new mongoose.Schema({
     required: [true, "Please provide quantity of the product"],
     min: [0, "Cannot be a negative value"],
   },
- date:{
-  type: Date,
-  default: Date.now
-}
+  amountPerUnit: {
+    type: Number,
+    required: [true, "Please provide amount per unit"],
+    min: [0, "Cannot be negative"],
+  },
+  totalAmount: {
+    type: Number,
+    required: [true, "Please provide total amount"],
+    min: [0, "Cannot be negative"],
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const StorageUsageSchema = new mongoose.Schema({
