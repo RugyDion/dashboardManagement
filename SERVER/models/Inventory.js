@@ -38,9 +38,9 @@ const SalesReportSchema = new mongoose.Schema({
     min: [0, "Field cannot have a negative value"],
   },
   date:{
-    type:String,
-    default: new Date().toLocaleDateString()
-  }
+  type: Date,
+  default: Date.now
+}
 });
 
 const DailyStorageSchema = new mongoose.Schema({
@@ -53,10 +53,10 @@ const DailyStorageSchema = new mongoose.Schema({
     required: [true, "Please provide quantity of the product"],
     min: [0, "Cannot be a negative value"],
   },
-  date:{
-    type:Date,
-    default:new Date().toLocaleDateString()
-  }
+ date:{
+  type: Date,
+  default: Date.now
+}
 });
 
 const StorageUsageSchema = new mongoose.Schema({
@@ -70,9 +70,9 @@ const StorageUsageSchema = new mongoose.Schema({
     min: [0, "Cannot be a negative value"],
   },
   date:{
-    type:Date,
-    default:new Date().toLocaleDateString()
-  }
+  type: Date,
+  default: Date.now
+}
 });
 
 const SalesReport = mongoose.model("SalesReport", SalesReportSchema);
