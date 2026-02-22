@@ -90,9 +90,12 @@ document.getElementById('storageForm').addEventListener('submit', async function
 
     const productName = document.getElementById('productNameStorage').value;
     const quantity = parseInt(document.getElementById('quantityStorage').value) || 0;
+    const amountPerUnit = parseFloat(document.getElementById('amountPerUnit').value) || 0;
+    const totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
     const dateTime = new Date().toLocaleString();
 
-    const storageEntry = { productName, quantity, date: dateTime };
+    const storageEntry = { productName, quantity, amountPerUnit,
+    totalAmount, date: dateTime };
 
     // Add new stock entry to backend
     await fetch(`${salesUrl}dailyStorageEntry`, {
@@ -153,6 +156,8 @@ async function loadStorageEntries() {
         row.innerHTML = `
             <td>${new Date(entry.date).toLocaleString()}</td>
             <td>${entry.productName}</td>
+            <td>${entry.amountPerUnit}</td>
+            <td>${entry.totalAmount}</td>
             <td>${entry.quantity}</td>
             <td>${entry.totalAfter}</td>
         `;
@@ -260,6 +265,174 @@ document.getElementById('clearUsage').addEventListener('click', async function (
     await loadUsageEntries();
 });
 
+// ----------------- DEBT SECTION -----------------
+    
+    document.getElementById('debtForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('debtName').value;
+    const amount = parseFloat(document.getElementById('debtAmount').value);
+
+    const response = await fetch('/api/v1/debt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, amount })
+    });
+
+    loadDebtEntries();
+    this.reset();
+});
+
+    async function loadDebtEntries() {
+    const res = await fetch('/api/v1/debt');
+    const data = await res.json();
+
+    const tbody = document.getElementById('debtTableBody');
+    tbody.innerHTML = '';
+
+    data.forEach(entry => {
+        const row = `
+            <tr>
+                <td>${new Date(entry.date).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
+                <td>${entry.name}</td>
+                <td>${entry.originalAmount}</td>
+                <td>${entry.remainingAmount}</td>
+                <td><button onclick="addPayment('${entry._id}')">Add Payment</button></td>
+                <td><button onclick="clearDebt('${entry._id}')">Clear</button></td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+    async function addPayment(id) {
+    const payment = prompt("Enter payment amount:");
+    if (!payment) return;
+
+    await fetch(`/api/v1/debt/${id}/payment`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseFloat(payment) })
+    });
+
+    loadDebtEntries();
+}
+
+    async function clearDebt(id) {
+    if (!confirm("Clear this debt?")) return;
+
+    await fetch(`/api/v1/debt/${id}`, {
+        method: 'DELETE'
+    });
+
+    loadDebtEntries();
+}
+// ----------------- STAFF PAYROLL SECTION -----------------
+
+    const now = new Date();
+const monthYear = now.toLocaleString("en-NG", { 
+    month: "long", 
+    year: "numeric", 
+    timeZone: "Africa/Lagos"
+});
+document.getElementById("payrollTitle").innerText = 
+    `SALARY SCHEDULE FOR ${monthYear.toUpperCase()}`;
+
+    function addStaffRow() {
+    const tbody = document.getElementById("payrollTableBody");
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td><input type="text" class="staffName" required></td>
+        <td><input type="text" class="designation" required></td>
+        <td><input type="number" class="grossSalary" required></td>
+        <td><input type="number" class="bonus" value="0"></td>
+        <td><input type="number" class="tips" value="0"></td>
+        <td><input type="number" class="debt" value="0"></td>
+        <td><input type="number" class="shortage" value="0"></td>
+        <td><input type="number" class="payable" readonly></td>
+        <td><input type="text" class="accountNumber"></td>
+        <td><input type="text" class="bankName"></td>
+        <td><button type="button" onclick="this.closest('tr').remove()">X</button></td>
+    `;
+
+    tbody.appendChild(row);
+
+    attachCalculationListeners(row);
+}
+
+    document.getElementById("addStaffBtn")
+    .addEventListener("click", addStaffRow);
+
+addStaffRow(); // first row auto add
+
+
+    document.getElementById("payrollForm")
+.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const rows = document.querySelectorAll("#payrollTableBody tr");
+
+    const staff = [];
+
+    rows.forEach(row => {
+        staff.push({
+            staffName: row.querySelector(".staffName").value,
+            designation: row.querySelector(".designation").value,
+            grossSalary: parseFloat(row.querySelector(".grossSalary").value) || 0,
+            bonus: parseFloat(row.querySelector(".bonus").value) || 0,
+            tips: parseFloat(row.querySelector(".tips").value) || 0,
+            debt: parseFloat(row.querySelector(".debt").value) || 0,
+            shortage: parseFloat(row.querySelector(".shortage").value) || 0,
+            payable: parseFloat(row.querySelector(".payable").value) || 0,
+            accountNumber: row.querySelector(".accountNumber").value,
+            bankName: row.querySelector(".bankName").value
+        });
+    });
+
+    await fetch("/api/v1/payroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            month: monthYear,
+            staff
+        })
+    });
+
+    alert("Payroll saved successfully.");
+    loadPayrollEntries();
+});
+
+    async function loadPayrollEntries() {
+    const res = await fetch("/api/v1/payroll");
+    const data = await res.json();
+
+    const tbody = document.getElementById("savedPayrollTable");
+    tbody.innerHTML = "";
+
+    data.forEach(entry => {
+        const row = `
+            <tr>
+                <td>${new Date(entry.date).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
+                <td>${entry.month}</td>
+                <td>${entry.staff.length}</td>
+                <td><button onclick="printPayroll('${entry._id}')">Print</button></td>
+                <td><button onclick="clearPayroll('${entry._id}')">Clear</button></td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+    async function clearPayroll(id) {
+    if (!confirm("Clear this payroll entry?")) return;
+
+    await fetch(`/api/v1/payroll/${id}`, {
+        method: "DELETE"
+    });
+
+    loadPayrollEntries();
+}
 
    // ----------------- PRINT MODAL -----------------
 let salesData = [];   // hold fetched sales entries
@@ -533,4 +706,5 @@ function printTable(entries, title) {
         loadSalesEntries();
         loadStorageEntries();
         loadUsageEntries();
+        loadPayrollEntries();
 });
