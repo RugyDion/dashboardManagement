@@ -267,35 +267,41 @@ document.getElementById('clearUsage').addEventListener('click', async function (
 
 // ----------------- DEBT SECTION -----------------
     
-    document.getElementById('debtForm').addEventListener('submit', async function(e) {
+document.getElementById('debtForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const name = document.getElementById('debtName').value;
     const amount = parseFloat(document.getElementById('debtAmount').value);
 
-    const response = await fetch('/api/v1/debt', {
+    await fetch(`${salesUrl}debt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, amount })
+        body: JSON.stringify({
+            customerName: name,
+            description: "Debt entry",
+            totalAmount: amount
+        })
     });
 
     loadDebtEntries();
     this.reset();
 });
 
-    async function loadDebtEntries() {
-    const res = await fetch('/api/v1/debt');
+async function loadDebtEntries() {
+    const res = await fetch(`${salesUrl}debt`);
     const data = await res.json();
 
     const tbody = document.getElementById('debtTableBody');
     tbody.innerHTML = '';
 
-    data.forEach(entry => {
+    const debts = data.debts || [];
+
+    debts.forEach(entry => {
         const row = `
             <tr>
                 <td>${new Date(entry.date).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
-                <td>${entry.name}</td>
-                <td>${entry.originalAmount}</td>
+                <td>${entry.customerName}</td>
+                <td>${entry.totalAmount}</td>
                 <td>${entry.remainingAmount}</td>
                 <td><button onclick="addPayment('${entry._id}')">Add Payment</button></td>
                 <td><button onclick="clearDebt('${entry._id}')">Clear</button></td>
@@ -304,11 +310,12 @@ document.getElementById('clearUsage').addEventListener('click', async function (
         tbody.innerHTML += row;
     });
 }
-    async function addPayment(id) {
+
+async function addPayment(id) {
     const payment = prompt("Enter payment amount:");
     if (!payment) return;
 
-    await fetch(`/api/v1/debt/${id}/payment`, {
+    await fetch(`${salesUrl}debt/${id}/payment`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: parseFloat(payment) })
@@ -317,27 +324,30 @@ document.getElementById('clearUsage').addEventListener('click', async function (
     loadDebtEntries();
 }
 
-    async function clearDebt(id) {
+async function clearDebt(id) {
     if (!confirm("Clear this debt?")) return;
 
-    await fetch(`/api/v1/debt/${id}`, {
+    await fetch(`${salesUrl}debt/${id}`, {
         method: 'DELETE'
     });
 
     loadDebtEntries();
 }
+
+
 // ----------------- STAFF PAYROLL SECTION -----------------
 
-    const now = new Date();
+const now = new Date();
 const monthYear = now.toLocaleString("en-NG", { 
     month: "long", 
     year: "numeric", 
     timeZone: "Africa/Lagos"
 });
+
 document.getElementById("payrollTitle").innerText = 
     `SALARY SCHEDULE FOR ${monthYear.toUpperCase()}`;
 
-    function attachCalculationListeners(row) {
+function attachCalculationListeners(row) {
     const gross = row.querySelector(".grossSalary");
     const bonus = row.querySelector(".bonus");
     const tips = row.querySelector(".tips");
@@ -360,12 +370,11 @@ document.getElementById("payrollTitle").innerText =
         input.addEventListener("input", calculatePayable);
     });
 
-    calculatePayable(); // initial calculation
+    calculatePayable();
 }
 
-    function addStaffRow() {
+function addStaffRow() {
     const tbody = document.getElementById("payrollTableBody");
-
     const row = document.createElement("tr");
 
     row.innerHTML = `
@@ -383,17 +392,15 @@ document.getElementById("payrollTitle").innerText =
     `;
 
     tbody.appendChild(row);
-
     attachCalculationListeners(row);
 }
 
-    document.getElementById("addStaffBtn")
+document.getElementById("addStaffBtn")
     .addEventListener("click", addStaffRow);
 
-addStaffRow(); // first row auto add
+addStaffRow();
 
-
-    document.getElementById("payrollForm")
+document.getElementById("payrollForm")
 .addEventListener("submit", async function(e) {
     e.preventDefault();
 
@@ -416,33 +423,39 @@ addStaffRow(); // first row auto add
         });
     });
 
-    await fetch("/api/v1/payroll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            month: monthYear,
-            staff
-        })
-    });
+    // Save each staff individually (matches backend structure)
+    for (const person of staff) {
+        await fetch(`${salesUrl}payroll`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                staffName: person.staffName,
+                role: person.designation,
+                salaryAmount: person.payable
+            })
+        });
+    }
 
     alert("Payroll saved successfully.");
     loadPayrollEntries();
 });
 
-    async function loadPayrollEntries() {
-    const res = await fetch("/api/v1/payroll");
+async function loadPayrollEntries() {
+    const res = await fetch(`${salesUrl}payroll`);
     const data = await res.json();
 
     const tbody = document.getElementById("savedPayrollTable");
     tbody.innerHTML = "";
 
-    data.forEach(entry => {
+    const payroll = data.payroll || [];
+
+    payroll.forEach(entry => {
         const row = `
             <tr>
                 <td>${new Date(entry.date).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
-                <td>${entry.month}</td>
-                <td>${entry.staff.length}</td>
-                <td><button onclick="printPayroll('${entry._id}')">Print</button></td>
+                <td>${entry.staffName}</td>
+                <td>${entry.role}</td>
+                <td>${entry.salaryAmount}</td>
                 <td><button onclick="clearPayroll('${entry._id}')">Clear</button></td>
             </tr>
         `;
@@ -450,10 +463,10 @@ addStaffRow(); // first row auto add
     });
 }
 
-    async function clearPayroll(id) {
+async function clearPayroll(id) {
     if (!confirm("Clear this payroll entry?")) return;
 
-    await fetch(`/api/v1/payroll/${id}`, {
+    await fetch(`${salesUrl}payroll/${id}`, {
         method: "DELETE"
     });
 
