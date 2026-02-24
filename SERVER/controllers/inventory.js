@@ -4,6 +4,8 @@ const {
   SalesReport,
   DailyStorage,
   StorageUsage,
+  Debt,
+  Payroll
 } = require("../models/Inventory");
 
 const addTotalSales = async (req, res) => {
