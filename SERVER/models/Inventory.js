@@ -122,34 +122,31 @@ const DebtSchema = new mongoose.Schema({
 });
 
 
-
 const PayrollSchema = new mongoose.Schema({
-  staffName: {
+  month: {
     type: String,
-    required: [true, "Staff name is required"],
+    required: true,
   },
-  role: {
-    type: String,
-    required: [true, "Role is required"],
-  },
-  salaryAmount: {
-    type: Number,
-    required: [true, "Salary amount is required"],
-    min: [0, "Cannot be negative"],
-  },
-  paymentStatus: {
-    type: String,
-    enum: ["Pending", "Paid"],
-    default: "Pending",
-  },
-  paymentDate: {
-    type: Date,
-  },
+  staff: [
+    {
+      staffName: { type: String, required: true },
+      designation: { type: String, required: true },
+      grossSalary: { type: Number, required: true },
+      bonus: { type: Number, default: 0 },
+      tips: { type: Number, default: 0 },
+      debt: { type: Number, default: 0 },
+      shortage: { type: Number, default: 0 },
+      payable: { type: Number, required: true },
+      accountNumber: { type: String },
+      bankName: { type: String },
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
+
 
 
 const SalesReport = mongoose.model("SalesReport", SalesReportSchema);
