@@ -221,20 +221,20 @@ const deleteDebt = async (req, res) => {
 
 const addPayroll = async (req, res) => {
   try {
-    const { staffName, role, salaryAmount } = req.body;
+    const { month, staff } = req.body;
 
-    if (!staffName || !role || !salaryAmount) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!month || !staff || !Array.isArray(staff) || staff.length === 0) {
+      return res.status(400).json({ message: "Invalid payroll data" });
     }
 
     const payroll = new Payroll({
-      staffName,
-      role,
-      salaryAmount,
+      month,
+      staff,
     });
 
     await payroll.save();
-    res.status(201).json({ message: "Payroll added successfully", payroll });
+
+    res.status(201).json({ message: "Payroll saved successfully", payroll });
   } catch (err) {
     res.status(500).json({ message: "Failed to add payroll" });
   }
@@ -242,7 +242,7 @@ const addPayroll = async (req, res) => {
 
 const seePayroll = async (req, res) => {
   try {
-    const payroll = await Payroll.find({});
+    const payroll = await Payroll.find({}).sort({ createdAt: -1 });
     res.status(200).json({ payroll });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch payroll" });
@@ -258,7 +258,6 @@ const deletePayroll = async (req, res) => {
     res.status(500).json({ message: "Failed to delete payroll" });
   }
 };
-
 
 
 
