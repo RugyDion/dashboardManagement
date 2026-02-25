@@ -148,6 +148,7 @@ const deleteTotalSales = async (req, res) => {
 // =======================
 // DEBT SECTION
 // =======================
+
 const addDebt = async (req, res) => {
   try {
     const { recordedBy, customerName, totalAmount } = req.body;
@@ -172,6 +173,15 @@ const addDebt = async (req, res) => {
   }
 };
 
+const seeDebts = async (req, res) => {
+  try {
+    const debts = await Debt.find({}).sort({ date: -1 });
+    res.status(200).json({ debts });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch debts", error: err.message });
+  }
+};
+
 const updateDebtPayment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -184,10 +194,8 @@ const updateDebtPayment = async (req, res) => {
     const debt = await Debt.findById(id);
     if (!debt) return res.status(404).json({ message: "Debt not found" });
 
-    // Reduce or increase remaining
-    debt.remainingAmount = debt.remainingAmount - paymentAmount;
+    debt.remainingAmount -= paymentAmount;
 
-    // Prevent negative remaining
     if (debt.remainingAmount < 0) {
       debt.remainingAmount = 0;
     }
@@ -210,7 +218,6 @@ const deleteDebt = async (req, res) => {
     res.status(500).json({ message: "Failed to delete debt" });
   }
 };
-
 // =======================
 // PAYROLL SECTION
 // =======================
