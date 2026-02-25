@@ -560,10 +560,14 @@ if (printPayrollBtn) {
         window.print();
     });
 }
-   // ----------------- PRINT MODAL -----------------
-let salesData = [];   // hold fetched sales entries
-let storageData = []; // hold fetched storage entries
-let usageData = [];   // hold fetched usage entries
+// ----------------- PRINT MODAL -----------------
+
+let salesData = [];
+let storageData = [];
+let usageData = [];
+let payrollData = [];   // 🔥 ADD THIS
+
+let currentPrintSection = null;
 
 window.openPrintModal = function (section) {
     currentPrintSection = section;
@@ -574,50 +578,75 @@ window.closePrintModal = function () {
     document.getElementById('printModal').style.display = 'none';
 }
 
-window.printSection = function () {
-    const fromDate = document.getElementById('modalFromDate').value ? new Date(document.getElementById('modalFromDate').value) : null;
-    const toDate = document.getElementById('modalToDate').value ? new Date(document.getElementById('modalToDate').value + "T23:59:59") : null;
+window.printSection = async function () {   // 🔥 NOW ASYNC
+
+    const fromDate = document.getElementById('modalFromDate').value
+        ? new Date(document.getElementById('modalFromDate').value)
+        : null;
+
+    const toDate = document.getElementById('modalToDate').value
+        ? new Date(document.getElementById('modalToDate').value + "T23:59:59")
+        : null;
 
     let entriesToPrint = [];
     let title = '';
 
+    // ================= SALES =================
     if (currentPrintSection === 'sales') {
+
         entriesToPrint = salesData.slice().filter(entry => {
             const entryDate = new Date(entry.date);
             if (fromDate && entryDate < fromDate) return false;
             if (toDate && entryDate > toDate) return false;
             return true;
         });
+
         title = 'End of Day Sales Report';
-    } else if (currentPrintSection === 'storage') {
+    }
+
+    // ================= STORAGE =================
+    else if (currentPrintSection === 'storage') {
+
         entriesToPrint = storageData.slice().filter(entry => {
             const entryDate = new Date(entry.date);
             if (fromDate && entryDate < fromDate) return false;
             if (toDate && entryDate > toDate) return false;
             return true;
         });
+
         title = 'Saved Stock Entries';
-    } else if (currentPrintSection === 'usage') {
+    }
+
+    // ================= USAGE =================
+    else if (currentPrintSection === 'usage') {
+
         entriesToPrint = usageData.slice().filter(entry => {
             const entryDate = new Date(entry.date);
             if (fromDate && entryDate < fromDate) return false;
             if (toDate && entryDate > toDate) return false;
             return true;
         });
+
         title = 'Saved Stock Used/Sold Entries';
     }
 
-    // Force newest first no matter what backend sends
-    entriesToPrint = entriesToPrint
-    .slice()
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .reverse();
+    // ================= PAYROLL =================
+    else if (currentPrintSection === 'payroll') {
 
+        const res = await fetch(`${salesUrl}payroll`);
+        const data = await res.json();
 
+        payrollData = data.payroll || [];
+
+        entriesToPrint = payrollData;
+
+        title = 'Salary Schedule';
+    }
 
     printTable(entriesToPrint, title);
     closePrintModal();
 }
+
 
 function printTable(entries, title) {
 
@@ -637,14 +666,13 @@ function printTable(entries, title) {
                 body {
                     font-family: Arial, sans-serif;
                     margin: 0;
-                    padding-top: 20px;   /* THIS FIXES THE HEADING ISSUE */
+                    padding-top: 20px;
                 }
 
                 h1 {
                     text-align: center;
                     font-size: 22px;
                     margin: 0 0 15px 0;
-                    display: block;
                 }
 
                 .print-date {
@@ -672,6 +700,12 @@ function printTable(entries, title) {
                 th {
                     background-color: #f2f2f2;
                 }
+
+                .total-row {
+                    font-weight: bold;
+                    background-color: #f2f2f2;
+                }
+
             </style>
         </head>
 
@@ -704,6 +738,7 @@ function printTable(entries, title) {
 
 
     function generateTableHeader() {
+
         if (currentPrintSection === 'sales') {
             return `
                 <thead>
@@ -747,6 +782,25 @@ function printTable(entries, title) {
             `;
         }
 
+        if (currentPrintSection === 'payroll') {
+            return `
+                <thead>
+                    <tr>
+                        <th>Staff Name</th>
+                        <th>Designation</th>
+                        <th>Gross Salary</th>
+                        <th>Bonus</th>
+                        <th>Tips</th>
+                        <th>Debt</th>
+                        <th>Shortage</th>
+                        <th>Payable</th>
+                        <th>Account Number</th>
+                        <th>Bank Name</th>
+                    </tr>
+                </thead>
+            `;
+        }
+
         return '';
     }
 
@@ -757,80 +811,134 @@ function printTable(entries, title) {
             return `
                 <tr>
                     <td colspan="100%" style="text-align:center;">
-                        No entries for selected date range
+                        No entries available
                     </td>
                 </tr>
             `;
         }
 
-        let grandTotal = 0;
+        // ================= SALES =================
+        if (currentPrintSection === 'sales') {
 
-        return entries.map((entry, index) => {
+            let grandTotal = 0;
 
-            if (currentPrintSection === 'sales') {
+            return entries.map((entry, index) => {
 
-                const bookings = entry.bookingsEndOfDaySales || 0;
-                const food = entry.foodEndOfDaySales || 0;
-                const drinks = entry.drinksEndOfDaySales || 0;
-                const events = entry.eventsEndOfDaySales || 0;
-                const laundry = entry.laundryEndOfDaySales || 0;
-                const pool = entry.poolEndOfDaySales || 0;
                 const total = entry.totalSales || 0;
-
                 grandTotal += total;
 
                 return `
                     <tr>
                         <td>${new Date(entry.date).toLocaleString()}</td>
-                        <td>₦${bookings.toLocaleString()}</td>
-                        <td>₦${food.toLocaleString()}</td>
-                        <td>₦${drinks.toLocaleString()}</td>
-                        <td>₦${events.toLocaleString()}</td>
-                        <td>₦${laundry.toLocaleString()}</td>
-                        <td>₦${pool.toLocaleString()}</td>
+                        <td>₦${(entry.bookingsEndOfDaySales || 0).toLocaleString()}</td>
+                        <td>₦${(entry.foodEndOfDaySales || 0).toLocaleString()}</td>
+                        <td>₦${(entry.drinksEndOfDaySales || 0).toLocaleString()}</td>
+                        <td>₦${(entry.eventsEndOfDaySales || 0).toLocaleString()}</td>
+                        <td>₦${(entry.laundryEndOfDaySales || 0).toLocaleString()}</td>
+                        <td>₦${(entry.poolEndOfDaySales || 0).toLocaleString()}</td>
                         <td>₦${total.toLocaleString()}</td>
                     </tr>
 
                     ${index === entries.length - 1 ? `
-                        <tr>
-                            <td colspan="7" style="text-align:right;font-weight:bold;">
-                                Grand Total:
-                            </td>
+                        <tr class="total-row">
+                            <td colspan="7" style="text-align:right;">Grand Total:</td>
                             <td>₦${grandTotal.toLocaleString()}</td>
                         </tr>
                     ` : ''}
                 `;
-            }
+            }).join('');
+        }
 
-            if (currentPrintSection === 'storage') {
-                return `
-                    <tr>
-                        <td>${new Date(entry.date).toLocaleString()}</td>
-                        <td>${entry.productName}</td>
-                        <td>${entry.quantity}</td>
-                        <td>${entry.totalAfter}</td>
+        // ================= STORAGE =================
+        if (currentPrintSection === 'storage') {
+            return entries.map(entry => `
+                <tr>
+                    <td>${new Date(entry.date).toLocaleString()}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.quantity}</td>
+                    <td>${entry.totalAfter}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ================= USAGE =================
+        if (currentPrintSection === 'usage') {
+            return entries.map(entry => `
+                <tr>
+                    <td>${new Date(entry.date).toLocaleString()}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.takeOutQuantity}</td>
+                    <td>${entry.remaining}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ================= PAYROLL =================
+        if (currentPrintSection === 'payroll') {
+
+            let rows = '';
+
+            entries.forEach(entry => {
+
+                let totals = {
+                    gross: 0,
+                    bonus: 0,
+                    tips: 0,
+                    debt: 0,
+                    shortage: 0,
+                    payable: 0
+                };
+
+                (entry.staff || []).forEach(person => {
+
+                    totals.gross += person.grossSalary || 0;
+                    totals.bonus += person.bonus || 0;
+                    totals.tips += person.tips || 0;
+                    totals.debt += person.debt || 0;
+                    totals.shortage += person.shortage || 0;
+                    totals.payable += person.payable || 0;
+
+                    rows += `
+                        <tr>
+                            <td>${person.staffName}</td>
+                            <td>${person.designation}</td>
+                            <td>₦${(person.grossSalary || 0).toLocaleString()}</td>
+                            <td>₦${(person.bonus || 0).toLocaleString()}</td>
+                            <td>₦${(person.tips || 0).toLocaleString()}</td>
+                            <td>₦${(person.debt || 0).toLocaleString()}</td>
+                            <td>₦${(person.shortage || 0).toLocaleString()}</td>
+                            <td>₦${(person.payable || 0).toLocaleString()}</td>
+                            <td>${person.accountNumber || ''}</td>
+                            <td>${person.bankName || ''}</td>
+                        </tr>
+                    `;
+                });
+
+                rows += `
+                    <tr class="total-row">
+                        <td colspan="2">TOTAL (${entry.month})</td>
+                        <td>₦${totals.gross.toLocaleString()}</td>
+                        <td>₦${totals.bonus.toLocaleString()}</td>
+                        <td>₦${totals.tips.toLocaleString()}</td>
+                        <td>₦${totals.debt.toLocaleString()}</td>
+                        <td>₦${totals.shortage.toLocaleString()}</td>
+                        <td>₦${totals.payable.toLocaleString()}</td>
+                        <td></td>
+                        <td></td>
                     </tr>
                 `;
-            }
+            });
 
-            if (currentPrintSection === 'usage') {
-                return `
-                    <tr>
-                        <td>${new Date(entry.date).toLocaleString()}</td>
-                        <td>${entry.productName}</td>
-                        <td>${entry.takeOutQuantity}</td>
-                        <td>${entry.remaining}</td>
-                    </tr>
-                `;
-            }
+            return rows;
+        }
 
-            return '';
-        }).join('');
+        return '';
     }
 }
      // Load existing data immediately when page opens
         loadSalesEntries();
         loadStorageEntries();
         loadUsageEntries();
+        loadDebtEntries();   
         loadPayrollEntries();
 });
