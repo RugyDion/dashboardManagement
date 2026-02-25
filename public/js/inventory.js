@@ -449,26 +449,75 @@ async function loadPayrollEntries() {
 
     const payroll = data.payroll || [];
 
-    payroll.forEach(entry => {
+    payroll
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .forEach(entry => {
+
         const row = `
             <tr>
-                <td>${new Date(entry.date).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
+                <td>${new Date(entry.createdAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
                 <td>${entry.staffName}</td>
                 <td>${entry.role}</td>
-                <td>${entry.salaryAmount}</td>
-                <td><button onclick="clearPayroll('${entry._id}')">Clear</button></td>
+                <td>₦${entry.salaryAmount.toLocaleString()}</td>
+                <td>
+                    <button onclick="clearPayroll('${entry._id}')">Delete</button>
+                </td>
             </tr>
         `;
+
         tbody.innerHTML += row;
     });
 }
-
 async function clearPayroll(id) {
     if (!confirm("Clear this payroll entry?")) return;
 
     await fetch(`${salesUrl}payroll/${id}`, {
         method: "DELETE"
     });
+
+    loadPayrollEntries();
+}
+
+    function printPayroll() {
+    const title = document.getElementById("payrollTitle").innerText;
+    const table = document.getElementById("payrollTable").outerHTML;
+
+    const printWindow = window.open('', '', 'width=900,height=650');
+
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Payroll</title>
+            <style>
+                body { font-family: Arial; padding: 40px; }
+                h2 { text-align: center; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid black; padding: 8px; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <h2>${title}</h2>
+            ${table}
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.print();
+}
+
+    async function clearAllPayroll() {
+    if (!confirm("Clear ALL payroll entries?")) return;
+
+    const res = await fetch(`${salesUrl}payroll`);
+    const data = await res.json();
+
+    for (const entry of data.payroll) {
+        await fetch(`${salesUrl}payroll/${entry._id}`, {
+            method: "DELETE"
+        });
+    }
 
     loadPayrollEntries();
 }
