@@ -553,11 +553,10 @@ if (clearAllPayrollBtn) {
 
 
 // ================= PRINT =================
-
 const printPayrollBtn = document.getElementById("printPayrollBtn");
 if (printPayrollBtn) {
     printPayrollBtn.addEventListener("click", () => {
-        window.print();
+        openPrintModal('payroll');
     });
 }
 // ----------------- PRINT MODAL -----------------
