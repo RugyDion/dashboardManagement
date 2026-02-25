@@ -7,12 +7,6 @@
     <link rel="stylesheet" href="css/inventory_styles.css">
     <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
     <style>
-
-       .payroll-buttons {
-        margin-top: 20px; /* adds space between table and buttons */
-        display: flex;     /* keep buttons side by side */
-        gap: 10px;         /* space between the buttons */
-    }
                 
         /* Modal */
         .modal { display: none; position: fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5);}
@@ -275,11 +269,11 @@
             </table>
         </div>
 
-   <!-- 👇 Buttons under the Saved Payroll Entries table -->
-<div class="payroll-buttons">
-    <button id="printSelectedPayroll" class="print-btn">Print Payroll</button>
-    <button id="clearAllPayroll" class="clear-btn">Clear All Payroll</button>
-</div>
+  <!-- 👇 Buttons under Saved Payroll Entries remain unchanged -->
+    <div style="margin-top:15px;">
+        <button id="printSelectedPayroll" class="print-btn">Print Payroll</button>
+        <button id="clearAllPayroll" class="clear-btn">Clear All Payroll</button>
+    </div>
     </form>
 
     <h3>Saved Payroll Entries</h3>
