@@ -153,10 +153,12 @@ const addDebt = async (req, res) => {
   try {
     const { recordedBy, customerName, totalAmount } = req.body;
 
+    // Validate required fields
     if (!recordedBy || !customerName || totalAmount == null) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Create new debt entry
     const debt = new Debt({
       recordedBy,
       customerName,
@@ -175,6 +177,7 @@ const addDebt = async (req, res) => {
 
 const seeDebts = async (req, res) => {
   try {
+    // Fetch all debts sorted by date (latest first)
     const debts = await Debt.find({}).sort({ date: -1 });
     res.status(200).json({ debts });
   } catch (err) {
@@ -187,6 +190,7 @@ const updateDebtPayment = async (req, res) => {
     const { id } = req.params;
     const { paymentAmount } = req.body;
 
+    // Validate payment amount
     if (paymentAmount == null) {
       return res.status(400).json({ message: "Payment amount required" });
     }
@@ -194,8 +198,12 @@ const updateDebtPayment = async (req, res) => {
     const debt = await Debt.findById(id);
     if (!debt) return res.status(404).json({ message: "Debt not found" });
 
-    debt.remainingAmount -= paymentAmount;
+    // Apply payment logic:
+    // - Positive amount: increase remaining (debt grows)
+    // - Negative amount: reduce remaining (payment made)
+    debt.remainingAmount += Number(paymentAmount);
 
+    // Prevent remainingAmount from going below zero
     if (debt.remainingAmount < 0) {
       debt.remainingAmount = 0;
     }
@@ -203,7 +211,6 @@ const updateDebtPayment = async (req, res) => {
     await debt.save();
 
     res.status(200).json({ message: "Debt updated successfully", debt });
-
   } catch (err) {
     res.status(500).json({ message: "Failed to update debt", error: err.message });
   }
@@ -215,9 +222,10 @@ const deleteDebt = async (req, res) => {
     await Debt.findByIdAndDelete(id);
     res.status(200).json({ message: "Debt deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete debt" });
+    res.status(500).json({ message: "Failed to delete debt", error: err.message });
   }
 };
+
 // =======================
 // PAYROLL SECTION
 // =======================
