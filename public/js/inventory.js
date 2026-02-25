@@ -318,7 +318,7 @@ async function addPayment(id) {
     await fetch(`${salesUrl}debt/${id}/payment`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(payment) })
+        body: JSON.stringify({ paymentAmount: parseFloat(payment) })
     });
 
     loadDebtEntries();
@@ -423,21 +423,21 @@ document.getElementById("payrollForm")
         });
     });
 
-    // Save each staff individually (matches backend structure)
-    for (const person of staff) {
-        await fetch(`${salesUrl}payroll`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                staffName: person.staffName,
-                role: person.designation,
-                salaryAmount: person.payable
-            })
-        });
-    }
+   
+    await fetch(`${salesUrl}payroll`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        month: monthYear,
+        staff: staff
+    })
+});
 
     alert("Payroll saved successfully.");
     loadPayrollEntries();
+
+    document.getElementById("payrollTableBody").innerHTML = "";
+    addStaffRow();
 });
 
 async function loadPayrollEntries() {
@@ -447,21 +447,16 @@ async function loadPayrollEntries() {
     const tbody = document.getElementById("savedPayrollTable");
     tbody.innerHTML = "";
 
-    const payroll = data.payroll || [];
-
-    payroll
-    .slice()
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .forEach(entry => {
+    data.payroll.forEach(entry => {
 
         const row = `
             <tr>
                 <td>${new Date(entry.createdAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
-                <td>${entry.staffName}</td>
-                <td>${entry.role}</td>
-                <td>₦${entry.salaryAmount.toLocaleString()}</td>
+                <td>${entry.month}</td>
+                <td>${entry.staff.length}</td>
                 <td>
-                    <button onclick="clearPayroll('${entry._id}')">Delete</button>
+                    <button onclick="printPayroll('${entry._id}')">Print</button>
+                    <button onclick="clearPayroll('${entry._id}')">Clear</button>
                 </td>
             </tr>
         `;
@@ -479,26 +474,108 @@ async function clearPayroll(id) {
     loadPayrollEntries();
 }
 
-    function printPayroll() {
-    const title = document.getElementById("payrollTitle").innerText;
-    const table = document.getElementById("payrollTable").outerHTML;
+  async function printPayroll(id) {
 
-    const printWindow = window.open('', '', 'width=900,height=650');
+    const res = await fetch(`${salesUrl}payroll`);
+    const data = await res.json();
+    const entry = data.payroll.find(p => p._id === id);
+
+    if (!entry) return;
+
+    let totals = {
+        gross: 0,
+        bonus: 0,
+        tips: 0,
+        debt: 0,
+        shortage: 0,
+        payable: 0
+    };
+
+    let rows = "";
+
+    entry.staff.forEach(person => {
+
+        totals.gross += person.grossSalary;
+        totals.bonus += person.bonus;
+        totals.tips += person.tips;
+        totals.debt += person.debt;
+        totals.shortage += person.shortage;
+        totals.payable += person.payable;
+
+        rows += `
+            <tr>
+                <td>${person.staffName}</td>
+                <td>${person.designation}</td>
+                <td>₦${person.grossSalary.toLocaleString()}</td>
+                <td>₦${person.bonus.toLocaleString()}</td>
+                <td>₦${person.tips.toLocaleString()}</td>
+                <td>₦${person.debt.toLocaleString()}</td>
+                <td>₦${person.shortage.toLocaleString()}</td>
+                <td>₦${person.payable.toLocaleString()}</td>
+                <td>${person.accountNumber || ""}</td>
+                <td>${person.bankName || ""}</td>
+            </tr>
+        `;
+    });
+
+    rows += `
+        <tr style="font-weight:bold; background:#f2f2f2;">
+            <td colspan="2">TOTAL</td>
+            <td>₦${totals.gross.toLocaleString()}</td>
+            <td>₦${totals.bonus.toLocaleString()}</td>
+            <td>₦${totals.tips.toLocaleString()}</td>
+            <td>₦${totals.debt.toLocaleString()}</td>
+            <td>₦${totals.shortage.toLocaleString()}</td>
+            <td>₦${totals.payable.toLocaleString()}</td>
+            <td></td>
+            <td></td>
+        </tr>
+    `;
+
+    const printWindow = window.open('', '', 'width=1000,height=700');
 
     printWindow.document.write(`
         <html>
         <head>
-            <title>Payroll</title>
+            <title>Salary Schedule - ${entry.month}</title>
             <style>
-                body { font-family: Arial; padding: 40px; }
+                body { font-family: Arial; padding: 20px; }
                 h2 { text-align: center; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { border: 1px solid black; padding: 8px; text-align: center; }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    border: 1px solid black;
+                    padding: 6px;
+                    text-align: center;
+                }
+                th {
+                    background: #eee;
+                }
             </style>
         </head>
         <body>
-            <h2>${title}</h2>
-            ${table}
+            <h2>SALARY SCHEDULE FOR ${entry.month.toUpperCase()}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Staff Name</th>
+                        <th>Designation</th>
+                        <th>Gross Salary</th>
+                        <th>Bonus</th>
+                        <th>Tips</th>
+                        <th>Debt</th>
+                        <th>Shortage</th>
+                        <th>Payable</th>
+                        <th>Account Number</th>
+                        <th>Bank Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
         </body>
         </html>
     `);
