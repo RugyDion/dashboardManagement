@@ -190,8 +190,7 @@
 
 
 
-
-        <section id="debtSection">
+<section id="debtSection">
     <h2>Debt Entry</h2>
 
     <form id="debtForm">
@@ -205,30 +204,41 @@
             <input type="number" id="debtAmount" required>
         </div>
 
-        <button type="submit">Add Debt</button>
+        <button type="submit" class="submit-btn">Add Debt</button>
     </form>
 
     <h3>Saved Debt Entries</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Name</th>
-                <th>Original Amount</th>
-                <th>Remaining</th>
-                <th>Add Payment</th>
-                <th>Clear</th>
-            </tr>
-        </thead>
-        <tbody id="debtTableBody"></tbody>
-    </table>
-</section>
 
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Original Amount</th>
+                    <th>Remaining</th>
+                    <th>Add Payment</th>
+                    <th>Clear</th>
+                </tr>
+            </thead>
+            <tbody id="debtTableBody"></tbody>
+        </table>
+    </div>
+
+    <button id="clearAllDebt" class="clear-btn">Clear All Debt</button>
+</section>
     <!-- Payroll Section -->
 <section id="payrollSection">
-    <h2 id="payrollTitle">Salary Schedule</h2>
+    <h2>Salary Schedule</h2>
 
     <form id="payrollForm">
+
+        <!-- Month Selector -->
+        <div class="form-group">
+            <label>Select Month</label>
+            <input type="month" id="payrollMonth" required>
+        </div>
+
         <div class="table-container">
             <table id="payrollTable">
                 <thead>
@@ -246,9 +256,7 @@
                         <th>Remove</th>
                     </tr>
                 </thead>
-                <tbody id="payrollTableBody">
-                    <!-- Dynamic rows go here -->
-                </tbody>
+                <tbody id="payrollTableBody"></tbody>
             </table>
         </div>
 
@@ -257,6 +265,7 @@
     </form>
 
     <h3>Saved Payroll Entries</h3>
+
     <div class="table-container">
         <table>
             <thead>
@@ -264,15 +273,19 @@
                     <th>Date</th>
                     <th>Month</th>
                     <th>Total Staff</th>
-                    <th>Print</th>
-                    <th>Clear</th>
                 </tr>
             </thead>
             <tbody id="savedPayrollTable"></tbody>
         </table>
     </div>
-</section>
 
+    <!-- 👇 Buttons moved UNDER the table -->
+    <div style="margin-top:15px;">
+        <button id="printSelectedPayroll" class="print-btn">Print Selected</button>
+        <button id="clearSelectedPayroll" class="clear-btn">Clear Selected</button>
+        <button id="clearAllPayroll" class="clear-btn">Clear All Payroll</button>
+    </div>
+</section>
 
         
         
