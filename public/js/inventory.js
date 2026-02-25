@@ -271,28 +271,40 @@ document.getElementById('clearUsage').addEventListener('click', async function (
 });
 
 // ----------------- DEBT SECTION -----------------
-    
-document.getElementById('debtForm').addEventListener('submit', async function(e) {
+
+// ===== CREATE DEBT =====
+document.getElementById('debtForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    const name = document.getElementById('debtName').value;
+    const recordedBy = document.getElementById('recordedBy').value.trim();
+    const debtorName = document.getElementById('debtorName').value.trim();
     const amount = parseFloat(document.getElementById('debtAmount').value);
+
+    if (!recordedBy || !debtorName || isNaN(amount) || amount <= 0) {
+        alert("Please fill all fields correctly.");
+        return;
+    }
 
     await fetch(`${salesUrl}debt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            customerName: name,
+            recordedBy: recordedBy,
+            customerName: debtorName,
             description: "Debt entry",
             totalAmount: amount
         })
     });
 
+    alert("Debt added successfully.");
     loadDebtEntries();
     this.reset();
 });
 
+
+// ===== LOAD DEBT ENTRIES =====
 async function loadDebtEntries() {
+
     const res = await fetch(`${salesUrl}debt`);
     const data = await res.json();
 
@@ -302,42 +314,79 @@ async function loadDebtEntries() {
     const debts = data.debts || [];
 
     debts.forEach(entry => {
+
         const row = `
             <tr>
                 <td>${new Date(entry.date).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
+                <td>${entry.recordedBy || "-"}</td>
                 <td>${entry.customerName}</td>
-                <td>${entry.totalAmount}</td>
-                <td>${entry.remainingAmount}</td>
-                <td><button onclick="addPayment('${entry._id}')">Add Payment</button></td>
-                <td><button onclick="clearDebt('${entry._id}')">Clear</button></td>
+                <td>₦${(entry.totalAmount || 0).toLocaleString()}</td>
+                <td>₦${(entry.remainingAmount || 0).toLocaleString()}</td>
+                <td>
+                    <button onclick="addPayment('${entry._id}')">
+                        Add / Adjust
+                    </button>
+                </td>
+                <td>
+                    <button onclick="clearDebt('${entry._id}')">
+                        Clear
+                    </button>
+                </td>
             </tr>
         `;
+
         tbody.innerHTML += row;
     });
 }
 
-async function addPayment(id) {
-    const payment = prompt("Enter payment amount:");
-    if (!payment) return;
+
+// ===== ADD OR ADJUST PAYMENT =====
+window.addPayment = async function (id) {
+
+    const amount = prompt(
+        "Enter amount:\n\n" +
+        "• Positive number = reduce debt\n" +
+        "• Negative number = increase debt"
+    );
+
+    if (amount === null) return;
+
+    const value = parseFloat(amount);
+
+    if (isNaN(value)) {
+        alert("Invalid amount entered.");
+        return;
+    }
 
     await fetch(`${salesUrl}debt/${id}/payment`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentAmount: parseFloat(payment) })
+        body: JSON.stringify({
+            paymentAmount: value
+        })
     });
 
+    alert("Debt updated successfully.");
     loadDebtEntries();
-}
+};
 
-async function clearDebt(id) {
-    if (!confirm("Clear this debt?")) return;
+
+// ===== CLEAR SINGLE DEBT =====
+window.clearDebt = async function (id) {
+
+    const confirmClear = confirm(
+        "Do you want to clear this debt?\n\nThis action cannot be undone."
+    );
+
+    if (!confirmClear) return;
 
     await fetch(`${salesUrl}debt/${id}`, {
         method: 'DELETE'
     });
 
+    alert("Debt cleared successfully.");
     loadDebtEntries();
-}
+};
 
 // ----------------- STAFF PAYROLL SECTION -----------------
 
