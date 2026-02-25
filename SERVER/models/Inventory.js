@@ -144,7 +144,7 @@ const PayrollSchema = new mongoose.Schema({
 const SalesReport = mongoose.model("SalesReport", SalesReportSchema);
 const DailyStorage = mongoose.model("DailyStorage", DailyStorageSchema);
 const StorageUsage = mongoose.model("StorageUsage", StorageUsageSchema);
-const Debt = mongoose.model("Debt", DebtSchema);
+const Debt = mongoose.model("Debt", debtSchema);
 const Payroll = mongoose.model("Payroll", PayrollSchema);
 
 module.exports = { 
