@@ -336,6 +336,7 @@ async function clearDebt(id) {
 
 
 // ----------------- STAFF PAYROLL SECTION -----------------
+// ----------------- STAFF PAYROLL SECTION -----------------
 
 const now = new Date();
 const monthYear = now.toLocaleString("en-NG", { 
@@ -346,6 +347,9 @@ const monthYear = now.toLocaleString("en-NG", {
 
 document.getElementById("payrollTitle").innerText = 
     `SALARY SCHEDULE FOR ${monthYear.toUpperCase()}`;
+
+
+// ================= CALCULATION =================
 
 function attachCalculationListeners(row) {
     const gross = row.querySelector(".grossSalary");
@@ -373,6 +377,9 @@ function attachCalculationListeners(row) {
     calculatePayable();
 }
 
+
+// ================= ADD STAFF ROW =================
+
 function addStaffRow() {
     const tbody = document.getElementById("payrollTableBody");
     const row = document.createElement("tr");
@@ -396,16 +403,19 @@ function addStaffRow() {
 }
 
 document.getElementById("addStaffBtn")
-    .addEventListener("click", addStaffRow);
+.addEventListener("click", addStaffRow);
 
 addStaffRow();
 
+
+// ================= SAVE PAYROLL =================
+
 document.getElementById("payrollForm")
 .addEventListener("submit", async function(e) {
+
     e.preventDefault();
 
     const rows = document.querySelectorAll("#payrollTableBody tr");
-
     const staff = [];
 
     rows.forEach(row => {
@@ -423,15 +433,14 @@ document.getElementById("payrollForm")
         });
     });
 
-   
     await fetch(`${salesUrl}payroll`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-        month: monthYear,
-        staff: staff
-    })
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            month: monthYear,
+            staff: staff
+        })
+    });
 
     alert("Payroll saved successfully.");
     loadPayrollEntries();
@@ -440,7 +449,11 @@ document.getElementById("payrollForm")
     addStaffRow();
 });
 
+
+// ================= LOAD SAVED PAYROLL =================
+
 async function loadPayrollEntries() {
+
     const res = await fetch(`${salesUrl}payroll`);
     const data = await res.json();
 
@@ -451,20 +464,51 @@ async function loadPayrollEntries() {
 
         const row = `
             <tr>
-                <td>${new Date(entry.createdAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}</td>
+                <td>
+                    <input type="radio" name="selectedPayroll" value="${entry._id}">
+                    ${new Date(entry.createdAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}
+                </td>
                 <td>${entry.month}</td>
                 <td>${entry.staff.length}</td>
-                <td>
-                    <button onclick="printPayroll('${entry._id}')">Print</button>
-                    <button onclick="clearPayroll('${entry._id}')">Clear</button>
-                </td>
             </tr>
         `;
 
         tbody.innerHTML += row;
     });
 }
-async function clearPayroll(id) {
+
+loadPayrollEntries();
+
+
+// ================= SELECTION =================
+
+function getSelectedPayrollId() {
+    const selected = document.querySelector('input[name="selectedPayroll"]:checked');
+    if (!selected) {
+        alert("Please select a payroll entry.");
+        return null;
+    }
+    return selected.value;
+}
+
+
+// ================= PRINT SELECTED =================
+
+document.getElementById("printSelectedPayroll")
+.addEventListener("click", () => {
+    const id = getSelectedPayrollId();
+    if (id) printPayroll(id);
+});
+
+
+// ================= CLEAR SELECTED =================
+
+document.getElementById("clearSelectedPayroll")
+.addEventListener("click", async () => {
+
+    const id = getSelectedPayrollId();
+    if (!id) return;
+
     if (!confirm("Clear this payroll entry?")) return;
 
     await fetch(`${salesUrl}payroll/${id}`, {
@@ -472,9 +516,34 @@ async function clearPayroll(id) {
     });
 
     loadPayrollEntries();
+});
+
+
+// ================= CLEAR ALL =================
+
+async function clearAllPayroll() {
+
+    if (!confirm("Clear ALL payroll entries?")) return;
+
+    const res = await fetch(`${salesUrl}payroll`);
+    const data = await res.json();
+
+    for (const entry of data.payroll) {
+        await fetch(`${salesUrl}payroll/${entry._id}`, {
+            method: "DELETE"
+        });
+    }
+
+    loadPayrollEntries();
 }
 
-  async function printPayroll(id) {
+document.getElementById("clearAllPayroll")
+.addEventListener("click", clearAllPayroll);
+
+
+// ================= PRINT FUNCTION =================
+
+async function printPayroll(id) {
 
     const res = await fetch(`${salesUrl}payroll`);
     const data = await res.json();
@@ -550,9 +619,7 @@ async function clearPayroll(id) {
                     padding: 6px;
                     text-align: center;
                 }
-                th {
-                    background: #eee;
-                }
+                th { background: #eee; }
             </style>
         </head>
         <body>
@@ -582,21 +649,6 @@ async function clearPayroll(id) {
 
     printWindow.document.close();
     printWindow.print();
-}
-
-    async function clearAllPayroll() {
-    if (!confirm("Clear ALL payroll entries?")) return;
-
-    const res = await fetch(`${salesUrl}payroll`);
-    const data = await res.json();
-
-    for (const entry of data.payroll) {
-        await fetch(`${salesUrl}payroll/${entry._id}`, {
-            method: "DELETE"
-        });
-    }
-
-    loadPayrollEntries();
 }
 
    // ----------------- PRINT MODAL -----------------
