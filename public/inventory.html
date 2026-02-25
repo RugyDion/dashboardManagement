@@ -9,9 +9,10 @@
     <style>
 
         .payroll-buttons {
-            margin-top: 20px; /* space between table and buttons */
-            display: flex;
-            gap: 10px;        /* space between buttons */
+            margin-top: 25px; /* space between table and buttons */
+            display: flex;     /* align buttons horizontally */
+            gap: 10px;         /* space between buttons */
+            justify-content: flex-start; /* optional: align buttons to left */
         }
                 
         /* Modal */
@@ -275,8 +276,11 @@
             </table>
         </div>
 
-        <button type="button" id="addStaffBtn" class="submit-btn">Add Staff</button>
-        <button type="submit" class="submit-btn">Submit Payroll</button>
+       <!-- 👇 Buttons moved UNDER the table -->
+<div class="payroll-buttons">
+    <button id="printSelectedPayroll" class="print-btn">Print Payroll</button>
+    <button id="clearAllPayroll" class="clear-btn">Clear All Payroll</button>
+</div>
     </form>
 
     <h3>Saved Payroll Entries</h3>
