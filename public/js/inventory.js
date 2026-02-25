@@ -567,7 +567,6 @@ let storageData = [];
 let usageData = [];
 let payrollData = [];   // 🔥 ADD THIS
 
-let currentPrintSection = null;
 
 window.openPrintModal = function (section) {
     currentPrintSection = section;
