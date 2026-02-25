@@ -334,19 +334,20 @@ async function clearDebt(id) {
     loadDebtEntries();
 }
 
-
-// ----------------- STAFF PAYROLL SECTION -----------------
 // ----------------- STAFF PAYROLL SECTION -----------------
 
 const now = new Date();
-const monthYear = now.toLocaleString("en-NG", { 
-    month: "long", 
-    year: "numeric", 
+const monthYear = now.toLocaleString("en-NG", {
+    month: "long",
+    year: "numeric",
     timeZone: "Africa/Lagos"
 });
 
-document.getElementById("payrollTitle").innerText = 
-    `SALARY SCHEDULE FOR ${monthYear.toUpperCase()}`;
+const payrollTitle = document.getElementById("payrollTitle");
+if (payrollTitle) {
+    payrollTitle.innerText =
+        `SALARY SCHEDULE FOR ${monthYear.toUpperCase()}`;
+}
 
 
 // ================= CALCULATION =================
@@ -360,7 +361,7 @@ function attachCalculationListeners(row) {
     const payable = row.querySelector(".payable");
 
     function calculatePayable() {
-        const total = 
+        const total =
             (parseFloat(gross.value) || 0) +
             (parseFloat(bonus.value) || 0) +
             (parseFloat(tips.value) || 0) -
@@ -382,6 +383,8 @@ function attachCalculationListeners(row) {
 
 function addStaffRow() {
     const tbody = document.getElementById("payrollTableBody");
+    if (!tbody) return;
+
     const row = document.createElement("tr");
 
     row.innerHTML = `
@@ -402,255 +405,161 @@ function addStaffRow() {
     attachCalculationListeners(row);
 }
 
-document.getElementById("addStaffBtn")
-.addEventListener("click", addStaffRow);
+const addStaffBtn = document.getElementById("addStaffBtn");
+if (addStaffBtn) {
+    addStaffBtn.addEventListener("click", addStaffRow);
+}
 
-addStaffRow();
+if (document.getElementById("payrollTableBody")) {
+    addStaffRow();
+}
 
 
 // ================= SAVE PAYROLL =================
 
-document.getElementById("payrollForm")
-.addEventListener("submit", async function(e) {
+const payrollForm = document.getElementById("payrollForm");
+if (payrollForm) {
+    payrollForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-    e.preventDefault();
+        const rows = document.querySelectorAll("#payrollTableBody tr");
+        const staff = [];
 
-    const rows = document.querySelectorAll("#payrollTableBody tr");
-    const staff = [];
-
-    rows.forEach(row => {
-        staff.push({
-            staffName: row.querySelector(".staffName").value,
-            designation: row.querySelector(".designation").value,
-            grossSalary: parseFloat(row.querySelector(".grossSalary").value) || 0,
-            bonus: parseFloat(row.querySelector(".bonus").value) || 0,
-            tips: parseFloat(row.querySelector(".tips").value) || 0,
-            debt: parseFloat(row.querySelector(".debt").value) || 0,
-            shortage: parseFloat(row.querySelector(".shortage").value) || 0,
-            payable: parseFloat(row.querySelector(".payable").value) || 0,
-            accountNumber: row.querySelector(".accountNumber").value,
-            bankName: row.querySelector(".bankName").value
+        rows.forEach(row => {
+            staff.push({
+                staffName: row.querySelector(".staffName").value,
+                designation: row.querySelector(".designation").value,
+                grossSalary: parseFloat(row.querySelector(".grossSalary").value) || 0,
+                bonus: parseFloat(row.querySelector(".bonus").value) || 0,
+                tips: parseFloat(row.querySelector(".tips").value) || 0,
+                debt: parseFloat(row.querySelector(".debt").value) || 0,
+                shortage: parseFloat(row.querySelector(".shortage").value) || 0,
+                payable: parseFloat(row.querySelector(".payable").value) || 0,
+                accountNumber: row.querySelector(".accountNumber").value,
+                bankName: row.querySelector(".bankName").value
+            });
         });
+
+        await fetch(`${salesUrl}payroll`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                month: monthYear,
+                staff
+            })
+        });
+
+        alert("Payroll saved successfully.");
+
+        document.getElementById("payrollTableBody").innerHTML = "";
+        addStaffRow();
+
+        loadPayrollEntries();
     });
-
-    await fetch(`${salesUrl}payroll`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            month: monthYear,
-            staff: staff
-        })
-    });
-
-    alert("Payroll saved successfully.");
-    loadPayrollEntries();
-
-    document.getElementById("payrollTableBody").innerHTML = "";
-    addStaffRow();
-});
+}
 
 
 // ================= LOAD SAVED PAYROLL =================
 
 async function loadPayrollEntries() {
 
+    const tbody = document.getElementById("savedPayrollTable");
+    if (!tbody) return;
+
     const res = await fetch(`${salesUrl}payroll`);
     const data = await res.json();
 
-    const tbody = document.getElementById("savedPayrollTable");
     tbody.innerHTML = "";
 
-    data.payroll.forEach(entry => {
+    const payrollEntries = data.payroll || [];
 
-        const row = `
-            <tr>
-                <td>
-                    <input type="radio" name="selectedPayroll" value="${entry._id}">
-                    ${new Date(entry.createdAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}
-                </td>
-                <td>${entry.month}</td>
-                <td>${entry.staff.length}</td>
+    payrollEntries.forEach(entry => {
+
+        let totals = {
+            gross: 0,
+            bonus: 0,
+            tips: 0,
+            debt: 0,
+            shortage: 0,
+            payable: 0
+        };
+
+        entry.staff.forEach(person => {
+            totals.gross += person.grossSalary;
+            totals.bonus += person.bonus;
+            totals.tips += person.tips;
+            totals.debt += person.debt;
+            totals.shortage += person.shortage;
+            totals.payable += person.payable;
+
+            const row = `
+                <tr>
+                    <td>${person.staffName}</td>
+                    <td>${person.designation}</td>
+                    <td>₦${person.grossSalary.toLocaleString()}</td>
+                    <td>₦${person.bonus.toLocaleString()}</td>
+                    <td>₦${person.tips.toLocaleString()}</td>
+                    <td>₦${person.debt.toLocaleString()}</td>
+                    <td>₦${person.shortage.toLocaleString()}</td>
+                    <td>₦${person.payable.toLocaleString()}</td>
+                    <td>${person.accountNumber || ""}</td>
+                    <td>${person.bankName || ""}</td>
+                </tr>
+            `;
+
+            tbody.innerHTML += row;
+        });
+
+        // Totals Row
+        tbody.innerHTML += `
+            <tr style="font-weight:bold;background:#f2f2f2;">
+                <td colspan="2">TOTAL (${entry.month})</td>
+                <td>₦${totals.gross.toLocaleString()}</td>
+                <td>₦${totals.bonus.toLocaleString()}</td>
+                <td>₦${totals.tips.toLocaleString()}</td>
+                <td>₦${totals.debt.toLocaleString()}</td>
+                <td>₦${totals.shortage.toLocaleString()}</td>
+                <td>₦${totals.payable.toLocaleString()}</td>
+                <td></td>
+                <td></td>
             </tr>
         `;
-
-        tbody.innerHTML += row;
     });
 }
 
 loadPayrollEntries();
 
 
-// ================= SELECTION =================
-
-function getSelectedPayrollId() {
-    const selected = document.querySelector('input[name="selectedPayroll"]:checked');
-    if (!selected) {
-        alert("Please select a payroll entry.");
-        return null;
-    }
-    return selected.value;
-}
-
-
-// ================= PRINT SELECTED =================
-
-document.getElementById("printSelectedPayroll")
-.addEventListener("click", () => {
-    const id = getSelectedPayrollId();
-    if (id) printPayroll(id);
-});
-
-
-// ================= CLEAR SELECTED =================
-
-document.getElementById("clearSelectedPayroll")
-.addEventListener("click", async () => {
-
-    const id = getSelectedPayrollId();
-    if (!id) return;
-
-    if (!confirm("Clear this payroll entry?")) return;
-
-    await fetch(`${salesUrl}payroll/${id}`, {
-        method: "DELETE"
-    });
-
-    loadPayrollEntries();
-});
-
-
 // ================= CLEAR ALL =================
 
-async function clearAllPayroll() {
+const clearAllPayrollBtn = document.getElementById("clearAllPayroll");
+if (clearAllPayrollBtn) {
+    clearAllPayrollBtn.addEventListener("click", async () => {
 
-    if (!confirm("Clear ALL payroll entries?")) return;
+        if (!confirm("Clear ALL payroll entries?")) return;
 
-    const res = await fetch(`${salesUrl}payroll`);
-    const data = await res.json();
+        const res = await fetch(`${salesUrl}payroll`);
+        const data = await res.json();
 
-    for (const entry of data.payroll) {
-        await fetch(`${salesUrl}payroll/${entry._id}`, {
-            method: "DELETE"
-        });
-    }
+        for (const entry of data.payroll || []) {
+            await fetch(`${salesUrl}payroll/${entry._id}`, {
+                method: "DELETE"
+            });
+        }
 
-    loadPayrollEntries();
-}
-
-document.getElementById("clearAllPayroll")
-.addEventListener("click", clearAllPayroll);
-
-
-// ================= PRINT FUNCTION =================
-
-async function printPayroll(id) {
-
-    const res = await fetch(`${salesUrl}payroll`);
-    const data = await res.json();
-    const entry = data.payroll.find(p => p._id === id);
-
-    if (!entry) return;
-
-    let totals = {
-        gross: 0,
-        bonus: 0,
-        tips: 0,
-        debt: 0,
-        shortage: 0,
-        payable: 0
-    };
-
-    let rows = "";
-
-    entry.staff.forEach(person => {
-
-        totals.gross += person.grossSalary;
-        totals.bonus += person.bonus;
-        totals.tips += person.tips;
-        totals.debt += person.debt;
-        totals.shortage += person.shortage;
-        totals.payable += person.payable;
-
-        rows += `
-            <tr>
-                <td>${person.staffName}</td>
-                <td>${person.designation}</td>
-                <td>₦${person.grossSalary.toLocaleString()}</td>
-                <td>₦${person.bonus.toLocaleString()}</td>
-                <td>₦${person.tips.toLocaleString()}</td>
-                <td>₦${person.debt.toLocaleString()}</td>
-                <td>₦${person.shortage.toLocaleString()}</td>
-                <td>₦${person.payable.toLocaleString()}</td>
-                <td>${person.accountNumber || ""}</td>
-                <td>${person.bankName || ""}</td>
-            </tr>
-        `;
+        loadPayrollEntries();
     });
-
-    rows += `
-        <tr style="font-weight:bold; background:#f2f2f2;">
-            <td colspan="2">TOTAL</td>
-            <td>₦${totals.gross.toLocaleString()}</td>
-            <td>₦${totals.bonus.toLocaleString()}</td>
-            <td>₦${totals.tips.toLocaleString()}</td>
-            <td>₦${totals.debt.toLocaleString()}</td>
-            <td>₦${totals.shortage.toLocaleString()}</td>
-            <td>₦${totals.payable.toLocaleString()}</td>
-            <td></td>
-            <td></td>
-        </tr>
-    `;
-
-    const printWindow = window.open('', '', 'width=1000,height=700');
-
-    printWindow.document.write(`
-        <html>
-        <head>
-            <title>Salary Schedule - ${entry.month}</title>
-            <style>
-                body { font-family: Arial; padding: 20px; }
-                h2 { text-align: center; }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                th, td {
-                    border: 1px solid black;
-                    padding: 6px;
-                    text-align: center;
-                }
-                th { background: #eee; }
-            </style>
-        </head>
-        <body>
-            <h2>SALARY SCHEDULE FOR ${entry.month.toUpperCase()}</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Staff Name</th>
-                        <th>Designation</th>
-                        <th>Gross Salary</th>
-                        <th>Bonus</th>
-                        <th>Tips</th>
-                        <th>Debt</th>
-                        <th>Shortage</th>
-                        <th>Payable</th>
-                        <th>Account Number</th>
-                        <th>Bank Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rows}
-                </tbody>
-            </table>
-        </body>
-        </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.print();
 }
 
+
+// ================= PRINT =================
+
+const printPayrollBtn = document.getElementById("printPayrollBtn");
+if (printPayrollBtn) {
+    printPayrollBtn.addEventListener("click", () => {
+        window.print();
+    });
+}
    // ----------------- PRINT MODAL -----------------
 let salesData = [];   // hold fetched sales entries
 let storageData = []; // hold fetched storage entries
