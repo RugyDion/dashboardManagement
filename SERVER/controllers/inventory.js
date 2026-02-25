@@ -148,35 +148,27 @@ const deleteTotalSales = async (req, res) => {
 // =======================
 // DEBT SECTION
 // =======================
-
 const addDebt = async (req, res) => {
   try {
-    const { customerName, description, totalAmount } = req.body;
+    const { recordedBy, customerName, totalAmount } = req.body;
 
-    if (!customerName || !description || !totalAmount) {
+    if (!recordedBy || !customerName || totalAmount == null) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const debt = new Debt({
+      recordedBy,
       customerName,
-      description,
       totalAmount,
       remainingAmount: totalAmount,
+      date: new Date()
     });
 
     await debt.save();
+
     res.status(201).json({ message: "Debt added successfully", debt });
   } catch (err) {
     res.status(500).json({ message: "Failed to add debt", error: err.message });
-  }
-};
-
-const seeDebts = async (req, res) => {
-  try {
-    const debts = await Debt.find({});
-    res.status(200).json({ debts });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch debts" });
   }
 };
 
@@ -185,23 +177,27 @@ const updateDebtPayment = async (req, res) => {
     const { id } = req.params;
     const { paymentAmount } = req.body;
 
+    if (paymentAmount == null) {
+      return res.status(400).json({ message: "Payment amount required" });
+    }
+
     const debt = await Debt.findById(id);
     if (!debt) return res.status(404).json({ message: "Debt not found" });
 
-    debt.amountPaid += paymentAmount;
-    debt.remainingAmount -= paymentAmount;
+    // Reduce or increase remaining
+    debt.remainingAmount = debt.remainingAmount - paymentAmount;
 
-    if (debt.remainingAmount <= 0) {
-      debt.status = "Paid";
+    // Prevent negative remaining
+    if (debt.remainingAmount < 0) {
       debt.remainingAmount = 0;
-    } else {
-      debt.status = "Partially Paid";
     }
 
     await debt.save();
-    res.status(200).json({ message: "Payment updated", debt });
+
+    res.status(200).json({ message: "Debt updated successfully", debt });
+
   } catch (err) {
-    res.status(500).json({ message: "Failed to update debt" });
+    res.status(500).json({ message: "Failed to update debt", error: err.message });
   }
 };
 
