@@ -345,8 +345,8 @@ window.addPayment = async function (id) {
 
     const amount = prompt(
         "Enter amount:\n\n" +
-        "• Positive number = reduce debt\n" +
-        "• Negative number = increase debt"
+        "• Positive number = increase debt\n" +
+        "• Negative number = reduce debt"
     );
 
     if (amount === null) return;
