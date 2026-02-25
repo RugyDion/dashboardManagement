@@ -1,4 +1,9 @@
 const salesUrl = "/api/v1/inventory/";
+let currentPrintSection = "";
+let salesData = [];
+let storageData = [];
+let usageData = [];
+let payrollData = [];
 
 document.addEventListener('DOMContentLoaded', function () {
     let currentPrintSection = ""; // Track which section is being printed
@@ -552,19 +557,8 @@ if (clearAllPayrollBtn) {
 }
 
 
-// ================= PRINT =================
-const printPayrollBtn = document.getElementById("printPayrollBtn");
-if (printPayrollBtn) {
-    printPayrollBtn.addEventListener("click", () => {
-        openPrintModal('payroll');
-    });
-}
-// ----------------- PRINT MODAL -----------------
 
-let salesData = [];
-let storageData = [];
-let usageData = [];
-let payrollData = [];   // 🔥 ADD THIS
+// ----------------- PRINT MODAL -----------------
 
 
 window.openPrintModal = function (section) {
@@ -933,6 +927,15 @@ function printTable(entries, title) {
         return '';
     }
 }
+
+const printSelectedPayrollBtn = document.getElementById("printSelectedPayroll");
+
+if (printSelectedPayrollBtn) {
+    printSelectedPayrollBtn.addEventListener("click", function () {
+        openPrintModal('payroll');
+    });
+}
+    
      // Load existing data immediately when page opens
         loadSalesEntries();
         loadStorageEntries();
