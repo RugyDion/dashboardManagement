@@ -86,39 +86,31 @@ const StorageUsageSchema = new mongoose.Schema({
 });
 
 
-const DebtSchema = new mongoose.Schema({
-  customerName: {
-    type: String,
-    required: [true, "Customer name is required"],
-  },
-  description: {
-    type: String,
-    required: [true, "Debt description is required"],
-  },
-  totalAmount: {
-    type: Number,
-    required: [true, "Total amount is required"],
-    min: [0, "Cannot be negative"],
-  },
-  amountPaid: {
-    type: Number,
-    default: 0,
-    min: [0, "Cannot be negative"],
-  },
-  remainingAmount: {
-    type: Number,
-    required: true,
-    min: [0, "Cannot be negative"],
-  },
-  status: {
-    type: String,
-    enum: ["Unpaid", "Partially Paid", "Paid"],
-    default: "Unpaid",
-  },
-  date: {
-    type: Date,
-    default: Date.now,
-  },
+const debtSchema = new mongoose.Schema({
+    recordedBy: {
+        type: String,
+        required: true
+    },
+    customerName: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        default: "Debt entry"
+    },
+    totalAmount: {
+        type: Number,
+        required: true
+    },
+    remainingAmount: {
+        type: Number,
+        required: true
+    },
+    date: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 
