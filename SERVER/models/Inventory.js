@@ -86,7 +86,7 @@ const StorageUsageSchema = new mongoose.Schema({
 });
 
 
-const debtSchema = new mongoose.Schema({
+const DebtSchema = new mongoose.Schema({
     recordedBy: {
         type: String,
         required: true
@@ -144,7 +144,7 @@ const PayrollSchema = new mongoose.Schema({
 const SalesReport = mongoose.model("SalesReport", SalesReportSchema);
 const DailyStorage = mongoose.model("DailyStorage", DailyStorageSchema);
 const StorageUsage = mongoose.model("StorageUsage", StorageUsageSchema);
-const Debt = mongoose.model("Debt", debtSchema);
+const Debt = mongoose.model("Debt", DebtSchema);
 const Payroll = mongoose.model("Payroll", PayrollSchema);
 
 module.exports = { 
